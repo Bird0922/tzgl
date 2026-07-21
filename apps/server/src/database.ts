@@ -16,10 +16,11 @@ export function createPool(): Pool {
 export async function runMigrations(pool: Pool): Promise<void> {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS tz_schema_migration (
-      file_name VARCHAR(255) NOT NULL,
-      applied_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+      file_name VARCHAR(255) NOT NULL COMMENT '已执行的数据库迁移文件名',
+      applied_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '迁移执行时间',
       PRIMARY KEY (file_name)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+      COMMENT='数据库迁移执行记录表'
   `);
   const migrationsDir = path.join(config.projectRoot, 'database', 'migrations');
   const files = (await fs.readdir(migrationsDir))
