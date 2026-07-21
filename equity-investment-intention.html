@@ -1,0 +1,1002 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>股权投资意向登记</title>
+  <style>
+    :root {
+      --primary: #0f6fcf;
+      --primary-dark: #075cad;
+      --primary-soft: #eaf4ff;
+      --success: #25a66a;
+      --warning: #ee9f26;
+      --danger: #d94b4b;
+      --text: #253247;
+      --muted: #6e7b90;
+      --line: #d9e2ec;
+      --field: #fff8df;
+      --page: #f4f7fb;
+      --white: #fff;
+      --shadow: 0 10px 28px rgba(32, 75, 121, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 1100px;
+      color: var(--text);
+      background: var(--page);
+      font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button { cursor: pointer; }
+
+    .app-header {
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      color: #fff;
+      background: linear-gradient(90deg, #075eb6, #1382dc);
+      box-shadow: 0 2px 10px rgba(12, 89, 163, 0.22);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 16px;
+    }
+
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.22);
+      font-weight: 700;
+    }
+
+    .workspace {
+      padding: 20px 24px 92px;
+    }
+
+    .toolbar,
+    .document {
+      width: min(1580px, calc(100vw - 48px));
+      margin: 0 auto;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .breadcrumb { color: var(--muted); }
+    .breadcrumb strong { color: var(--text); font-weight: 600; }
+
+    .prototype-switch {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .prototype-label { color: var(--muted); }
+
+    .segmented {
+      display: flex;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .segmented button {
+      min-width: 92px;
+      height: 30px;
+      border: 0;
+      border-radius: 6px;
+      color: var(--muted);
+      background: transparent;
+    }
+
+    .segmented button.active {
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 3px 8px rgba(15, 111, 207, 0.24);
+    }
+
+    .document {
+      overflow: hidden;
+      border: 1px solid #dbe5ef;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .document-title {
+      min-height: 86px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      padding: 0 34px;
+      color: #fff;
+      background: linear-gradient(90deg, #0867c2, #0878d9 62%, #0867c2);
+    }
+
+    .document-title h1 {
+      grid-column: 2;
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: 2px;
+    }
+
+    .document-no {
+      grid-column: 3;
+      justify-self: end;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 15px;
+    }
+
+    .document-no strong {
+      min-width: 142px;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+    }
+
+    .document-meta {
+      display: grid;
+      grid-template-columns: 1fr 1.55fr 0.9fr;
+      gap: 30px;
+      padding: 20px 34px 8px;
+    }
+
+    .meta-item,
+    .form-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .meta-item label,
+    .form-item > label {
+      flex: 0 0 auto;
+      color: #556275;
+      font-size: 15px;
+      white-space: nowrap;
+    }
+
+    .meta-value {
+      flex: 1;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      padding: 0 8px;
+      border-bottom: 1px solid var(--line);
+      color: #1f2937;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .document-body { padding: 12px 34px 28px; }
+
+    .section { margin-top: 14px; }
+
+    .section-heading {
+      height: 38px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 14px;
+      border-bottom: 3px solid var(--primary);
+    }
+
+    .section-heading h2 {
+      position: relative;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      margin: 0;
+      padding: 0 64px 0 18px;
+      color: #fff;
+      background: var(--primary);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .section-heading h2::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: -36px;
+      width: 72px;
+      height: 38px;
+      background: repeating-linear-gradient(62deg, #b9d8fb 0 9px, transparent 9px 16px);
+      transform: skewX(24deg);
+      transform-origin: center;
+    }
+
+    .section-note {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 10px 24px;
+    }
+
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-6 { grid-column: span 6; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+
+    .control {
+      width: 100%;
+      min-width: 0;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid #eadfac;
+      border-radius: 4px;
+      outline: 0;
+      color: #263246;
+      background: var(--field);
+      transition: border-color .18s, box-shadow .18s, background .18s;
+    }
+
+    .control::placeholder { color: #a8b1bd; }
+
+    .control:focus {
+      border-color: #69a9e9;
+      background: #fffdf5;
+      box-shadow: 0 0 0 3px rgba(15, 111, 207, 0.10);
+    }
+
+    textarea.control {
+      min-height: 76px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    select.control { cursor: pointer; }
+
+    .textarea-item { align-items: flex-start; }
+    .textarea-item > label { padding-top: 10px; }
+
+    .radio-group {
+      flex: 1;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 12px;
+      border: 1px solid #eadfac;
+      border-radius: 4px;
+      background: var(--field);
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .radio-group input { accent-color: var(--primary); }
+
+    .input-with-unit {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .input-with-unit .control { padding-right: 44px; }
+
+    .input-unit {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      color: #687386;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .readonly-control {
+      display: flex;
+      align-items: center;
+      color: #1a5e9f;
+      background: var(--primary-soft);
+      border-color: #a9cff5;
+      font-weight: 600;
+    }
+
+    .upload-control {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .upload-box {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 9px 7px 12px;
+      border: 1px dashed #d7c978;
+      border-radius: 4px;
+      background: var(--field);
+    }
+
+    .upload-placeholder { color: #a2aab5; }
+
+    .upload-button {
+      flex: 0 0 auto;
+      height: 28px;
+      padding: 0 12px;
+      border: 1px solid #8abcf0;
+      border-radius: 5px;
+      color: var(--primary);
+      background: #f5faff;
+    }
+
+    .file-input { display: none; }
+
+    .file-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 7px;
+    }
+
+    .file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      border-radius: 5px;
+      color: #37688f;
+      background: #edf6ff;
+      font-size: 12px;
+    }
+
+    .workflow-card {
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f9fbfd;
+    }
+
+    .workflow-route {
+      display: grid;
+      grid-template-columns: 1fr 90px 1fr 90px 1fr;
+      align-items: center;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .workflow-step { text-align: center; }
+
+    .step-icon {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 8px;
+      border: 2px solid #c5d1de;
+      border-radius: 50%;
+      color: #8190a2;
+      background: #fff;
+      font-weight: 700;
+    }
+
+    .workflow-step.active .step-icon {
+      border-color: var(--primary);
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 0 0 5px rgba(15, 111, 207, 0.10);
+    }
+
+    .workflow-step.done .step-icon {
+      border-color: var(--success);
+      color: #fff;
+      background: var(--success);
+    }
+
+    .step-name { font-weight: 600; }
+    .step-role { margin-top: 4px; color: var(--muted); font-size: 12px; }
+
+    .workflow-line {
+      height: 2px;
+      background: #cfd9e4;
+    }
+
+    .workflow-line.done { background: var(--success); }
+
+    .review-panel {
+      display: none;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .review-panel.visible { display: block; }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      color: #8b630f;
+      background: #fff2c7;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .status-chip::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-chip.reviewing { color: #1669b6; background: #e8f3ff; }
+    .status-chip.approved { color: #14794c; background: #e7f7ef; }
+    .status-chip.returned { color: #a13c3c; background: #ffecec; }
+
+    .action-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 20;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      border-top: 1px solid #dce5ee;
+      background: rgba(255, 255, 255, 0.96);
+      box-shadow: 0 -8px 26px rgba(35, 69, 103, 0.08);
+      backdrop-filter: blur(8px);
+    }
+
+    .action-group { display: none; gap: 14px; }
+    .action-group.visible { display: flex; }
+
+    .action-button {
+      min-width: 116px;
+      height: 40px;
+      padding: 0 22px;
+      border: 1px solid #bfcbd8;
+      border-radius: 6px;
+      color: #3d4b5d;
+      background: #fff;
+      font-weight: 600;
+      transition: transform .16s, box-shadow .16s, background .16s;
+    }
+
+    .action-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 12px rgba(28, 61, 96, 0.12);
+    }
+
+    .action-button.primary {
+      border-color: var(--primary);
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .action-button.primary:hover { background: var(--primary-dark); }
+    .action-button.success { border-color: var(--success); color: #fff; background: var(--success); }
+    .action-button.danger { border-color: #efb2b2; color: var(--danger); background: #fff5f5; }
+
+    .toast {
+      position: fixed;
+      top: 76px;
+      left: 50%;
+      z-index: 50;
+      min-width: 260px;
+      padding: 12px 18px;
+      border-radius: 7px;
+      color: #fff;
+      background: rgba(29, 42, 60, 0.94);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+      opacity: 0;
+      transform: translate(-50%, -12px);
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (max-width: 1250px) {
+      .form-grid { gap-right: 14px; }
+      .document-meta { gap: 16px; }
+      .document-title h1 { font-size: 27px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark">投</span>
+      <span>投资管理系统</span>
+    </div>
+    <div class="header-user">
+      <span class="avatar">综</span>
+      <span>综合管理员</span>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <div class="toolbar">
+      <div class="breadcrumb">投资前期 / 登记立项 / <strong>股权投资意向登记</strong></div>
+      <div class="prototype-switch">
+        <span class="status-chip" id="statusChip">待发</span>
+        <span class="prototype-label">演示节点</span>
+        <div class="segmented" aria-label="节点切换">
+          <button type="button" class="active" data-node="initiator">发起节点</button>
+          <button type="button" data-node="reviewer">审核节点</button>
+        </div>
+      </div>
+    </div>
+
+    <article class="document">
+      <header class="document-title">
+        <h1>股权投资意向登记</h1>
+        <div class="document-no">
+          <span>No</span>
+          <strong id="documentNo">保存后生成</strong>
+        </div>
+      </header>
+
+      <div class="document-meta">
+        <div class="meta-item">
+          <label>申请人</label>
+          <div class="meta-value">综合管理员</div>
+        </div>
+        <div class="meta-item">
+          <label>投资主体</label>
+          <div class="meta-value">远望实业集团有限公司</div>
+        </div>
+        <div class="meta-item">
+          <label>申请日期</label>
+          <div class="meta-value" id="applicationDate">2026-07-21</div>
+        </div>
+      </div>
+
+      <form class="document-body" id="intentionForm" novalidate>
+        <section class="section">
+          <div class="section-heading">
+            <h2>基础信息</h2>
+            <span class="section-note">当前原型字段均为非必填</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-item span-6">
+              <label for="projectName">项目名称</label>
+              <input class="control" id="projectName" name="projectName" placeholder="请输入项目名称">
+            </div>
+            <div class="form-item span-3">
+              <label for="investmentMethod">投资方式</label>
+              <select class="control readonly-control" id="investmentMethod" name="investmentMethod">
+                <option value="EQUITY">股权投资</option>
+              </select>
+            </div>
+            <div class="form-item span-3">
+              <label>重大项目</label>
+              <div class="radio-group">
+                <label><input type="radio" name="majorProject" value="yes"> 是</label>
+                <label><input type="radio" name="majorProject" value="no"> 否</label>
+              </div>
+            </div>
+
+            <div class="form-item span-3">
+              <label for="plannedStartDate">计划开始</label>
+              <input class="control" type="date" id="plannedStartDate" name="plannedStartDate">
+            </div>
+            <div class="form-item span-3">
+              <label for="plannedEndDate">计划结束</label>
+              <input class="control" type="date" id="plannedEndDate" name="plannedEndDate">
+            </div>
+            <div class="form-item span-3">
+              <label for="projectLeader">项目负责人</label>
+              <select class="control" id="projectLeader" name="projectLeader">
+                <option value="">请选择项目负责人</option>
+                <option value="admin" selected>综合管理员</option>
+                <option value="invest-manager">投资经理</option>
+                <option value="department-head">投资部门负责人</option>
+              </select>
+            </div>
+            <div class="form-item span-3">
+              <label for="contactPhone">联系电话</label>
+              <input class="control" id="contactPhone" name="contactPhone" placeholder="请输入联系电话">
+            </div>
+
+            <div class="form-item span-6">
+              <label for="projectLocation">项目地点</label>
+              <input class="control" id="projectLocation" name="projectLocation" placeholder="请输入项目地点">
+            </div>
+            <div class="form-item span-6">
+              <label for="researchReport">调研报告</label>
+              <div class="upload-control">
+                <div class="upload-box">
+                  <span class="upload-placeholder">支持上传调研报告附件</span>
+                  <label class="upload-button" for="researchReport">选择文件</label>
+                  <input class="file-input" type="file" id="researchReport" name="researchReport" multiple>
+                </div>
+                <div class="file-list" id="fileList"></div>
+              </div>
+            </div>
+
+            <div class="form-item textarea-item span-12">
+              <label for="projectSummary">项目概述</label>
+              <textarea class="control" id="projectSummary" name="projectSummary" placeholder="项目背景和投资的必要性"></textarea>
+            </div>
+            <div class="form-item textarea-item span-12">
+              <label for="mainContent">主要内容</label>
+              <textarea class="control" id="mainContent" name="mainContent" placeholder="项目的主要内容及相关说明"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading">
+            <h2>投资情况</h2>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-item span-6">
+              <label for="targetCompany">标的企业</label>
+              <select class="control" id="targetCompany" name="targetCompany">
+                <option value="">请选择投资企业</option>
+                <option value="target-a">远望新能源科技有限公司</option>
+                <option value="target-b">华北产业发展有限公司</option>
+                <option value="target-c">海州先进制造有限公司</option>
+              </select>
+            </div>
+            <div class="form-item span-6">
+              <label for="mainBusiness">主营业务</label>
+              <input class="control" id="mainBusiness" name="mainBusiness" placeholder="选择标的企业后可自动带出">
+            </div>
+
+            <div class="form-item span-3">
+              <label for="investmentDirection">投资方向</label>
+              <select class="control" id="investmentDirection" name="investmentDirection">
+                <option value="">请选择</option>
+                <option value="strategic">战略性投资</option>
+                <option value="financial">财务性投资</option>
+                <option value="industrial">产业协同投资</option>
+              </select>
+            </div>
+            <div class="form-item span-3">
+              <label for="domesticOverseas">境内外</label>
+              <select class="control" id="domesticOverseas" name="domesticOverseas">
+                <option value="">请选择</option>
+                <option value="DOMESTIC">境内</option>
+                <option value="OVERSEAS">境外</option>
+              </select>
+            </div>
+            <div class="form-item span-3">
+              <label for="currencyCode">投资币种</label>
+              <select class="control" id="currencyCode" name="currencyCode">
+                <option value="CNY" selected>人民币（CNY）</option>
+                <option value="USD">美元（USD）</option>
+                <option value="EUR">欧元（EUR）</option>
+                <option value="HKD">港币（HKD）</option>
+              </select>
+            </div>
+            <div class="form-item span-3">
+              <label for="exchangeRate">投资汇率</label>
+              <input class="control" type="number" id="exchangeRate" name="exchangeRate" value="1.0000" step="0.0001">
+            </div>
+
+            <div class="form-item span-3">
+              <label for="shareholdingRatio">计划占股比</label>
+              <div class="input-with-unit">
+                <input class="control" type="number" id="shareholdingRatio" name="shareholdingRatio" min="0" max="100" step="0.01">
+                <span class="input-unit">%</span>
+              </div>
+            </div>
+            <div class="form-item span-3">
+              <label for="totalInvestment">项目总投资额</label>
+              <div class="input-with-unit">
+                <input class="control" type="number" id="totalInvestment" name="totalInvestment" min="0" step="0.01">
+                <span class="input-unit">元</span>
+              </div>
+            </div>
+            <div class="form-item span-3">
+              <label for="plannedInvestment">计划投资额</label>
+              <div class="input-with-unit">
+                <input class="control" type="number" id="plannedInvestment" name="plannedInvestment" min="0" step="0.01">
+                <span class="input-unit">元</span>
+              </div>
+            </div>
+            <div class="form-item span-3">
+              <label for="expectedReturnRate">预计收益率</label>
+              <div class="input-with-unit">
+                <input class="control" type="number" id="expectedReturnRate" name="expectedReturnRate" step="0.01">
+                <span class="input-unit">%</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-heading">
+            <h2>审批信息</h2>
+          </div>
+
+          <div class="workflow-card">
+            <div class="workflow-route" id="workflowRoute">
+              <div class="workflow-step active" data-step="0">
+                <div class="step-icon">1</div>
+                <div class="step-name">业务发起人</div>
+                <div class="step-role">综合管理员</div>
+              </div>
+              <div class="workflow-line" data-line="0"></div>
+              <div class="workflow-step" data-step="1">
+                <div class="step-icon">2</div>
+                <div class="step-name">投资部门负责人</div>
+                <div class="step-role">审核</div>
+              </div>
+              <div class="workflow-line" data-line="1"></div>
+              <div class="workflow-step" data-step="2">
+                <div class="step-icon">3</div>
+                <div class="step-name">投资部门分管领导</div>
+                <div class="step-role">审核</div>
+              </div>
+            </div>
+
+            <div class="review-panel" id="reviewPanel">
+              <div class="form-item textarea-item">
+                <label for="reviewComment">审批意见</label>
+                <textarea class="control" id="reviewComment" name="reviewComment" placeholder="请输入审批意见（非必填）"></textarea>
+              </div>
+            </div>
+          </div>
+        </section>
+      </form>
+    </article>
+  </main>
+
+  <footer class="action-bar">
+    <div class="action-group visible" id="initiatorActions">
+      <button class="action-button" type="button" id="saveButton">保存待发</button>
+      <button class="action-button primary" type="button" id="sendButton">发送</button>
+    </div>
+    <div class="action-group" id="reviewerActions">
+      <button class="action-button danger" type="button" id="returnButton">退回</button>
+      <button class="action-button success" type="button" id="approveButton">同意</button>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const form = document.getElementById('intentionForm');
+    const documentNo = document.getElementById('documentNo');
+    const applicationDate = document.getElementById('applicationDate');
+    const statusChip = document.getElementById('statusChip');
+    const reviewPanel = document.getElementById('reviewPanel');
+    const initiatorActions = document.getElementById('initiatorActions');
+    const reviewerActions = document.getElementById('reviewerActions');
+    const toast = document.getElementById('toast');
+    const storageKey = 'equity-investment-intention-draft';
+    let currentStage = 0;
+    let toastTimer;
+
+    function localDateString(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function ensureDocumentNo() {
+      if (documentNo.textContent !== '保存后生成') return documentNo.textContent;
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const sequenceKey = `tz-sequence-${year}-${month}`;
+      const nextSequence = Number(localStorage.getItem(sequenceKey) || 0) + 1;
+      localStorage.setItem(sequenceKey, String(nextSequence));
+      documentNo.textContent = `TZ-${year}-${month}-${String(nextSequence).padStart(4, '0')}`;
+      return documentNo.textContent;
+    }
+
+    function collectFormData() {
+      const data = {};
+      new FormData(form).forEach((value, key) => {
+        if (value instanceof File) return;
+        data[key] = value;
+      });
+      data.documentNo = documentNo.textContent;
+      data.applicationDate = applicationDate.textContent;
+      data.status = statusChip.textContent;
+      data.currentStage = currentStage;
+      return data;
+    }
+
+    function restoreFormData(data) {
+      Object.entries(data).forEach(([key, value]) => {
+        const field = form.elements.namedItem(key);
+        if (!field || key === 'researchReport') return;
+
+        if (field instanceof RadioNodeList) {
+          field.value = value;
+        } else {
+          field.value = value;
+        }
+      });
+
+      if (data.documentNo && data.documentNo !== '保存后生成') documentNo.textContent = data.documentNo;
+      if (data.applicationDate) applicationDate.textContent = data.applicationDate;
+      if (data.status) setStatus(data.status);
+      if (Number.isInteger(Number(data.currentStage))) currentStage = Number(data.currentStage);
+      updateWorkflow(currentStage);
+    }
+
+    function saveDraft(message = '已保存待发') {
+      ensureDocumentNo();
+      setStatus('待发');
+      localStorage.setItem(storageKey, JSON.stringify(collectFormData()));
+      showToast(message);
+    }
+
+    function setStatus(status) {
+      statusChip.textContent = status;
+      statusChip.className = 'status-chip';
+      if (status === '审核中') statusChip.classList.add('reviewing');
+      if (status === '已通过') statusChip.classList.add('approved');
+      if (status === '已退回') statusChip.classList.add('returned');
+    }
+
+    function updateWorkflow(stage) {
+      document.querySelectorAll('.workflow-step').forEach((step, index) => {
+        step.classList.toggle('done', index < stage);
+        step.classList.toggle('active', index === stage && stage < 3);
+      });
+      document.querySelectorAll('.workflow-line').forEach((line, index) => {
+        line.classList.toggle('done', index < stage);
+      });
+    }
+
+    function switchNode(node) {
+      document.querySelectorAll('.segmented button').forEach(button => {
+        button.classList.toggle('active', button.dataset.node === node);
+      });
+      const reviewer = node === 'reviewer';
+      reviewPanel.classList.toggle('visible', reviewer);
+      initiatorActions.classList.toggle('visible', !reviewer);
+      reviewerActions.classList.toggle('visible', reviewer);
+    }
+
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.classList.add('show');
+      toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    document.querySelectorAll('.segmented button').forEach(button => {
+      button.addEventListener('click', () => switchNode(button.dataset.node));
+    });
+
+    document.getElementById('saveButton').addEventListener('click', () => saveDraft());
+
+    document.getElementById('sendButton').addEventListener('click', () => {
+      ensureDocumentNo();
+      currentStage = 1;
+      setStatus('审核中');
+      updateWorkflow(currentStage);
+      localStorage.setItem(storageKey, JSON.stringify(collectFormData()));
+      showToast('已发送至投资部门负责人');
+    });
+
+    document.getElementById('approveButton').addEventListener('click', () => {
+      ensureDocumentNo();
+      if (currentStage < 1) currentStage = 1;
+
+      if (currentStage === 1) {
+        currentStage = 2;
+        setStatus('审核中');
+        showToast('已同意，流转至投资部门分管领导');
+      } else {
+        currentStage = 3;
+        setStatus('已通过');
+        showToast('审批已完成');
+      }
+
+      updateWorkflow(currentStage);
+      localStorage.setItem(storageKey, JSON.stringify(collectFormData()));
+    });
+
+    document.getElementById('returnButton').addEventListener('click', () => {
+      ensureDocumentNo();
+      currentStage = 0;
+      setStatus('已退回');
+      updateWorkflow(currentStage);
+      localStorage.setItem(storageKey, JSON.stringify(collectFormData()));
+      showToast('已退回业务发起人');
+    });
+
+    document.getElementById('researchReport').addEventListener('change', event => {
+      const fileList = document.getElementById('fileList');
+      fileList.innerHTML = '';
+      Array.from(event.target.files).forEach(file => {
+        const item = document.createElement('span');
+        item.className = 'file-chip';
+        item.textContent = `附件 · ${file.name}`;
+        fileList.appendChild(item);
+      });
+    });
+
+    document.getElementById('targetCompany').addEventListener('change', event => {
+      const businessMap = {
+        'target-a': '新能源技术研发、设备制造与运营服务',
+        'target-b': '产业园区投资建设与资产运营',
+        'target-c': '先进制造、工业自动化及技术服务'
+      };
+      const mainBusiness = document.getElementById('mainBusiness');
+      if (!mainBusiness.value || !event.target.value) {
+        mainBusiness.value = businessMap[event.target.value] || '';
+      }
+    });
+
+    document.getElementById('currencyCode').addEventListener('change', event => {
+      if (event.target.value === 'CNY') document.getElementById('exchangeRate').value = '1.0000';
+    });
+
+    applicationDate.textContent = localDateString(new Date());
+    const savedDraft = localStorage.getItem(storageKey);
+    if (savedDraft) {
+      try { restoreFormData(JSON.parse(savedDraft)); } catch (error) { localStorage.removeItem(storageKey); }
+    } else {
+      updateWorkflow(currentStage);
+    }
+  </script>
+</body>
+</html>
