@@ -1,0 +1,24 @@
+{
+  "name": "@investment/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "vitest run src"
+  },
+  "dependencies": {
+    "@fastify/cors": "latest",
+    "@fastify/multipart": "latest",
+    "dotenv": "latest",
+    "fastify": "latest",
+    "mysql2": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "5.9.3",
+    "vitest": "latest"
+  }
+}
