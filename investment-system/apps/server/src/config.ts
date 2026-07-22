@@ -13,6 +13,8 @@ function required(name: string): string {
 
 export const config = {
   projectRoot,
+  production: process.env.NODE_ENV === 'production',
+  serverHost: process.env.SERVER_HOST ?? '127.0.0.1',
   serverPort: Number(process.env.SERVER_PORT ?? 3000),
   webOrigin: process.env.WEB_ORIGIN ?? 'http://127.0.0.1:5173',
   uploadDir: path.resolve(projectRoot, process.env.UPLOAD_DIR ?? './uploads'),
@@ -25,4 +27,3 @@ export const config = {
     charset: process.env.DB_CHARSET ?? 'utf8mb4'
   }
 };
-

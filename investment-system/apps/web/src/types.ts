@@ -1,9 +1,14 @@
-export type UserRole = 'initiator' | 'department_head' | 'division_leader';
+export type EntityStatus = 'ACTIVE' | 'DISABLED';
 
-export interface Actor {
+export interface AuthUser {
   id: string;
+  employeeNo: string;
+  username: string;
   name: string;
-  role: UserRole;
+  departmentId: string | null;
+  positionId: string | null;
+  mustChangePassword: boolean;
+  permissions: string[];
 }
 
 export interface Attachment {
@@ -22,7 +27,7 @@ export interface WorkflowHistory {
   toStage: number;
   operatorId: string;
   operatorName: string;
-  operatorRole: UserRole;
+  operatorRole: string;
   comment: string | null;
   createdAt: string;
 }
@@ -32,6 +37,7 @@ export interface IntentionDetail {
   applicationNo: string;
   applicantUserId: string | null;
   applicantName: string | null;
+  applicantDepartmentId: string | null;
   investmentEntityId: string | null;
   investmentEntityName: string | null;
   applicationDate: string | null;
@@ -59,20 +65,25 @@ export interface IntentionDetail {
   expectedReturnRate: string | null;
   status: 'PENDING_SEND' | 'IN_REVIEW' | 'APPROVED' | 'RETURNED';
   currentStage: number;
+  departmentHeadApproverId: string | null;
+  supervisingLeaderApproverId: string | null;
+  currentApproverUserId: string | null;
   version: number;
-  history: WorkflowHistory[];
-  attachments: Attachment[];
+  history?: WorkflowHistory[];
+  attachments?: Attachment[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IntentionForm {
   applicationDate: string;
   projectName: string;
+  investmentEntityId: string;
   investmentMethod: string;
   majorProject: '' | 'yes' | 'no';
   plannedStartDate: string;
   plannedEndDate: string;
   projectLeaderUserId: string;
-  projectLeaderName: string;
   contactPhone: string;
   projectLocation: string;
   projectSummary: string;
@@ -90,3 +101,40 @@ export interface IntentionForm {
   expectedReturnRate: string;
 }
 
+export interface UnitItem {
+  id: string; parentId: string | null; code: string; name: string;
+  status: EntityStatus; sortOrder: number; version: number;
+}
+
+export interface DepartmentItem {
+  id: string; unitId: string; unitName: string; code: string; name: string;
+  departmentHeadUserId: string | null; departmentHeadName: string | null;
+  supervisingLeaderUserId: string | null; supervisingLeaderName: string | null;
+  status: EntityStatus; sortOrder: number; version: number;
+}
+
+export interface PositionItem {
+  id: string; unitId: string; unitName: string; departmentId: string; departmentName: string;
+  code: string; name: string; status: EntityStatus; sortOrder: number; version: number;
+}
+
+export interface RoleItem {
+  id: string; code: string; name: string; description: string | null; isSystem: boolean;
+  status: EntityStatus; version: number; permissionCodes: string[];
+}
+
+export interface UserItem {
+  id: string; employeeNo: string; username: string; displayName: string;
+  mobile: string | null; email: string | null; unitId: string | null; unitName: string | null;
+  departmentId: string | null; departmentName: string | null;
+  positionId: string | null; positionName: string | null;
+  status: EntityStatus; mustChangePassword: boolean; version: number; roleIds: string[];
+  roles: Array<{ id: string; code: string; name: string }>;
+}
+
+export interface DirectoryUser {
+  id: string; employeeNo: string; name: string; unitId: string; unitName: string;
+  departmentId: string; departmentName: string; positionId: string; positionName: string;
+}
+
+export interface Paged<T> { items: T[]; total: number; page: number; pageSize: number }

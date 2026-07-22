@@ -15,7 +15,27 @@ export interface Actor {
   role: UserRole;
 }
 
+export type EntityStatus = 'ACTIVE' | 'DISABLED';
+
+export interface AuthUser {
+  id: string;
+  employeeNo: string;
+  username: string;
+  name: string;
+  departmentId: string | null;
+  positionId: string | null;
+  mustChangePassword: boolean;
+  permissions: string[];
+}
+
+export interface AuthContext {
+  user: AuthUser;
+  sessionId: string;
+  csrfTokenHash: string;
+}
+
 export interface IntentionInput {
+  version?: number;
   applicantUserId?: string | null;
   applicantName?: string | null;
   investmentEntityId?: string | null;
@@ -54,4 +74,3 @@ export class AppError extends Error {
     super(message);
   }
 }
-

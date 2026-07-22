@@ -8,12 +8,13 @@
     "test": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "vue": "latest"
+    "vue": "3.5.40",
+    "vue-router": "5.2.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "latest",
+    "@vitejs/plugin-vue": "6.0.8",
     "typescript": "5.9.3",
-    "vite": "latest",
-    "vue-tsc": "latest"
+    "vite": "8.1.5",
+    "vue-tsc": "3.3.7"
   }
 }

@@ -1,6 +1,7 @@
-import type { Actor, IntentionDetail, IntentionForm } from './types';
+import type { IntentionDetail, IntentionForm, Paged } from './types';
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:3000/api/v1';
+let csrfToken = '';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -9,82 +10,75 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-async function request<T>(
-  path: string,
-  actor: Actor,
-  init: RequestInit = {}
-): Promise<T> {
+export class ApiError extends Error {
+  constructor(message: string, public readonly code: string, public readonly status: number) {
+    super(message);
+  }
+}
+
+export function setCsrfToken(value: string) {
+  csrfToken = value;
+}
+
+export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   const isFormData = init.body instanceof FormData;
+  const method = (init.method ?? 'GET').toUpperCase();
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
+    credentials: 'include',
     headers: {
-      ...(isFormData ? {} : { 'content-type': 'application/json' }),
-      'x-user-id': actor.id,
-      'x-user-name': encodeURIComponent(actor.name),
-      'x-user-role': actor.role,
+      ...(isFormData || method === 'GET' ? {} : { 'content-type': 'application/json' }),
+      ...(method === 'GET' || !csrfToken ? {} : { 'x-csrf-token': csrfToken }),
       ...init.headers
     }
   });
   const result = await response.json() as ApiResponse<T>;
   if (!response.ok || !result.success) {
-    throw new Error(result.message ?? '请求处理失败');
+    throw new ApiError(result.message ?? '请求处理失败', result.code ?? 'REQUEST_FAILED', response.status);
   }
   return result.data;
 }
 
-export function createIntention(payload: object, actor: Actor) {
-  return request<IntentionDetail>('/investment-intentions', actor, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  });
+export function fetchIntentions(mode: 'mine' | 'todo' | 'all', page = 1, pageSize = 20) {
+  return apiRequest<Paged<IntentionDetail>>(`/investment-intentions?mode=${mode}&page=${page}&pageSize=${pageSize}`);
 }
 
-export function updateIntention(id: string, payload: object, actor: Actor) {
-  return request<IntentionDetail>(`/investment-intentions/${id}`, actor, {
-    method: 'PUT',
-    body: JSON.stringify(payload)
-  });
+export function fetchIntention(id: string) {
+  return apiRequest<IntentionDetail>(`/investment-intentions/${id}`);
 }
 
-export function submitIntention(id: string, actor: Actor) {
-  return request<IntentionDetail>(`/investment-intentions/${id}/submit`, actor, {
-    method: 'POST',
-    body: '{}'
-  });
+export function createIntention(payload: object) {
+  return apiRequest<IntentionDetail>('/investment-intentions', { method: 'POST', body: JSON.stringify(payload) });
 }
 
-export function approveIntention(id: string, comment: string, actor: Actor) {
-  return request<IntentionDetail>(`/investment-intentions/${id}/approve`, actor, {
-    method: 'POST',
-    body: JSON.stringify({ comment: comment || null })
-  });
+export function updateIntention(id: string, payload: object) {
+  return apiRequest<IntentionDetail>(`/investment-intentions/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
 }
 
-export function returnIntention(id: string, comment: string, actor: Actor) {
-  return request<IntentionDetail>(`/investment-intentions/${id}/return`, actor, {
-    method: 'POST',
-    body: JSON.stringify({ comment: comment || null })
-  });
+export function submitIntention(id: string) {
+  return apiRequest<IntentionDetail>(`/investment-intentions/${id}/submit`, { method: 'POST', body: '{}' });
 }
 
-export async function uploadFiles(id: string, files: File[], actor: Actor) {
+export function approveIntention(id: string, comment: string) {
+  return apiRequest<IntentionDetail>(`/investment-intentions/${id}/approve`, { method: 'POST', body: JSON.stringify({ comment: comment || null }) });
+}
+
+export function returnIntention(id: string, comment: string) {
+  return apiRequest<IntentionDetail>(`/investment-intentions/${id}/return`, { method: 'POST', body: JSON.stringify({ comment: comment || null }) });
+}
+
+export async function uploadFiles(id: string, files: File[]) {
   for (const file of files) {
     const body = new FormData();
     body.append('file', file);
-    await request<Array<{ id: string }>>(
-      `/investment-intentions/${id}/attachments`,
-      actor,
-      { method: 'POST', body }
-    );
+    await apiRequest<Array<{ id: string }>>(`/investment-intentions/${id}/attachments`, { method: 'POST', body });
   }
 }
 
-export function payloadFromForm(form: IntentionForm) {
+export function payloadFromForm(form: IntentionForm, version?: number) {
   return {
-    applicantUserId: 'user-admin',
-    applicantName: '综合管理员',
-    investmentEntityId: 'org-yuanwang',
-    investmentEntityName: '远望实业集团有限公司',
+    ...(version ? { version } : {}),
+    investmentEntityId: form.investmentEntityId || null,
     applicationDate: form.applicationDate || null,
     projectName: form.projectName || null,
     investmentMethod: form.investmentMethod || null,
@@ -92,7 +86,6 @@ export function payloadFromForm(form: IntentionForm) {
     plannedStartDate: form.plannedStartDate || null,
     plannedEndDate: form.plannedEndDate || null,
     projectLeaderUserId: form.projectLeaderUserId || null,
-    projectLeaderName: form.projectLeaderName || null,
     contactPhone: form.contactPhone || null,
     projectLocation: form.projectLocation || null,
     projectSummary: form.projectSummary || null,
@@ -110,4 +103,3 @@ export function payloadFromForm(form: IntentionForm) {
     expectedReturnRate: form.expectedReturnRate || null
   };
 }
-
