@@ -472,6 +472,7 @@ function clearMembers() {
 .title-copy { position: relative; z-index: 1; grid-column: 2; text-align: center; }
 .title-copy span { color: rgba(255, 255, 255, .56); font-size: 10px; letter-spacing: 3.2px; }
 .title-copy h1 { margin: 8px 0 0; font-size: 28px; letter-spacing: 3px; text-shadow: 0 3px 16px rgba(4, 8, 35, .22); }
+.project-application-title h1::before { content: none; }
 .document-no { position: relative; z-index: 1; min-height: 42px; padding: 0 15px; border: 1px solid rgba(255, 255, 255, .18); border-radius: 8px; background: rgba(255, 255, 255, .08); backdrop-filter: blur(8px); }
 
 .document-body { padding: 18px 38px 34px; }
