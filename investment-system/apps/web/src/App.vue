@@ -1,16 +1,21 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import {
   API_BASE,
   approveIntention,
   createIntention,
+  getGlobalApprovalPolicy,
   payloadFromForm,
   returnIntention,
   submitIntention,
   updateIntention,
   uploadFiles
 } from './api';
-import type { Actor, IntentionDetail, IntentionForm } from './types';
+import type { Actor, ApprovalPolicy, IntentionDetail, IntentionForm } from './types';
+import GroupDecisionApplication from './GroupDecisionApplication20260722_125218.vue';
+
+const isGroupDecisionApplication = new URLSearchParams(window.location.search)
+  .get('document') === 'group-decision-application';
 
 function today(): string {
   const date = new Date();
@@ -47,6 +52,7 @@ const form = reactive<IntentionForm>({
 });
 
 const detail = ref<IntentionDetail | null>(null);
+const approvalPolicy = ref<ApprovalPolicy | null>(null);
 const mode = ref<'initiator' | 'reviewer'>('initiator');
 const reviewComment = ref('');
 const pendingFiles = ref<File[]>([]);
@@ -79,10 +85,27 @@ const initiatorActor: Actor = {
   role: 'initiator'
 };
 
-const reviewerActor = computed<Actor>(() => currentStage.value === 2
-  ? { id: 'user-division-leader', name: '投资部门分管领导', role: 'division_leader' }
-  : { id: 'user-department-head', name: '投资部门负责人', role: 'department_head' }
-);
+const approvalStages = computed(() => approvalPolicy.value?.stages ?? []);
+const reviewerActor = computed<Actor>(() => {
+  const stage = approvalStages.value.find(item => item.stage === currentStage.value);
+  const role = stage?.role === 'division_leader' || currentStage.value === 2
+    ? 'division_leader'
+    : 'department_head';
+  return {
+    id: `user-${role.replace('_', '-')}`,
+    name: stage?.name ?? (role === 'division_leader' ? '经办部门分管领导' : '经办部门负责人'),
+    role
+  };
+});
+
+onMounted(async () => {
+  if (isGroupDecisionApplication) return;
+  try {
+    approvalPolicy.value = await getGlobalApprovalPolicy(initiatorActor);
+  } catch (error) {
+    notify(error instanceof Error ? error.message : '审批策略加载失败');
+  }
+});
 
 function notify(message: string) {
   window.clearTimeout(toastTimer);
@@ -157,7 +180,7 @@ function send() {
   return run(async () => {
     const saved = await persistDraft(false);
     applyDetail(await submitIntention(saved.id, initiatorActor));
-    notify('已发送至投资部门负责人');
+    notify('已发送至经办部门负责人');
   });
 }
 
@@ -167,7 +190,7 @@ function approve() {
     const beforeStage = currentStage.value;
     applyDetail(await approveIntention(detail.value!.id, reviewComment.value, reviewerActor.value));
     reviewComment.value = '';
-    notify(beforeStage === 1 ? '已流转至投资部门分管领导' : '审批已完成');
+    notify(beforeStage === 1 ? '已流转至经办部门分管领导' : '审批已完成');
   });
 }
 
@@ -177,7 +200,7 @@ function returnBack() {
     applyDetail(await returnIntention(detail.value!.id, reviewComment.value, reviewerActor.value));
     reviewComment.value = '';
     mode.value = 'initiator';
-    notify('已退回业务发起人');
+    notify('已退回经办人');
   });
 }
 
@@ -205,12 +228,14 @@ function fileSize(size: number) {
 </script>
 
 <template>
-  <header class="app-header">
+  <GroupDecisionApplication v-if="isGroupDecisionApplication" />
+
+  <header v-if="!isGroupDecisionApplication" class="app-header">
     <div class="brand"><span class="brand-mark">投</span><span>投资管理系统</span></div>
     <div class="header-user"><span class="avatar">综</span><span>综合管理员</span></div>
   </header>
 
-  <main class="workspace">
+  <main v-if="!isGroupDecisionApplication" class="workspace">
     <div class="toolbar">
       <div class="breadcrumb">投资前期 / 登记立项 / <strong>股权投资意向登记</strong></div>
       <div class="toolbar-right">
@@ -282,11 +307,11 @@ function fileSize(size: number) {
           <div class="section-heading"><h2>审批信息</h2></div>
           <div class="workflow-card">
             <div class="workflow-route">
-              <template v-for="(step, index) in ['业务发起人', '投资部门负责人', '投资部门分管领导']" :key="step">
-                <div class="workflow-step" :class="{ done: currentStage > index, active: currentStage === index && currentStage < 3 }">
-                  <div class="step-icon">{{ index + 1 }}</div><strong>{{ step }}</strong><small>{{ index === 0 ? '综合管理员' : '审核' }}</small>
+              <template v-for="(step, index) in approvalStages" :key="step.stage">
+                <div class="workflow-step" :class="{ done: currentStage > step.stage, active: currentStage === step.stage && currentStage < (approvalPolicy?.completedStage ?? 3) }">
+                  <div class="step-icon">{{ index + 1 }}</div><strong>{{ step.name }}</strong><small>{{ step.action === 'SUBMIT' ? '综合管理员' : '审核' }}</small>
                 </div>
-                <div v-if="index < 2" class="workflow-line" :class="{ done: currentStage > index }"></div>
+                <div v-if="index < approvalStages.length - 1" class="workflow-line" :class="{ done: currentStage > step.stage }"></div>
               </template>
             </div>
 
@@ -302,7 +327,7 @@ function fileSize(size: number) {
     </article>
   </main>
 
-  <footer class="action-bar">
+  <footer v-if="!isGroupDecisionApplication" class="action-bar">
     <template v-if="mode === 'initiator'">
       <button type="button" :disabled="busy || !editable" @click="saveDraft">保存待发</button>
       <button type="button" class="primary" :disabled="busy || !editable" @click="send">发送</button>
@@ -312,6 +337,5 @@ function fileSize(size: number) {
       <button type="button" class="success" :disabled="busy || !reviewable" @click="approve">同意</button>
     </template>
   </footer>
-  <div class="toast" :class="{ show: toast }">{{ toast }}</div>
+  <div v-if="!isGroupDecisionApplication" class="toast" :class="{ show: toast }">{{ toast }}</div>
 </template>
-

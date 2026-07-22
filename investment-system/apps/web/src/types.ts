@@ -4,6 +4,25 @@ export interface Actor {
   id: string;
   name: string;
   role: UserRole;
+  unitId?: string;
+  unitName?: string;
+  departmentId?: string;
+  departmentName?: string;
+}
+
+export interface ApprovalStage {
+  stage: number;
+  role: UserRole;
+  name: string;
+  action: 'SUBMIT' | 'APPROVE';
+}
+
+export interface ApprovalPolicy {
+  id: string;
+  name: string;
+  scope: 'ALL_DOCUMENTS';
+  completedStage: number;
+  stages: ApprovalStage[];
 }
 
 export interface Attachment {
@@ -90,3 +109,72 @@ export interface IntentionForm {
   expectedReturnRate: string;
 }
 
+export interface GroupDecisionApplicationDetail {
+  id: string;
+  applicationNo: string;
+  applicantUserId: string;
+  applicantName: string;
+  applicantUnitId: string | null;
+  applicantUnitName: string | null;
+  applicationDate: string;
+  applicationYear: number;
+  applicantDepartmentId: string | null;
+  applicantDepartmentName: string | null;
+  projectName: string | null;
+  projectCode: string | null;
+  projectLeaderUserId: string | null;
+  projectLeaderName: string | null;
+  plannedStartDate: string | null;
+  plannedEndDate: string | null;
+  investmentEntityId: string | null;
+  investmentEntityName: string | null;
+  investmentDirection: string | null;
+  domesticOverseas: string | null;
+  investmentMethod: string | null;
+  majorProject: boolean | null;
+  currencyCode: string | null;
+  projectTotalInvestment: string | null;
+  plannedInvestment: string | null;
+  expectedReturnRate: string | null;
+  fundingCompanyOwned: string | null;
+  fundingGroupRequested: string | null;
+  fundingSpecialBond: string | null;
+  fundingGovernment: string | null;
+  fundingLoan: string | null;
+  fundingOther: string | null;
+  annualPlannedInvestment: string | null;
+  status: 'PENDING_SEND' | 'IN_REVIEW' | 'APPROVED' | 'RETURNED';
+  currentStage: number;
+  version: number;
+  history: WorkflowHistory[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GroupDecisionApplicationForm {
+  applicationDate: string;
+  applicationYear: string;
+  projectName: string;
+  projectCode: string;
+  projectLeaderUserId: string;
+  projectLeaderName: string;
+  plannedStartDate: string;
+  plannedEndDate: string;
+  investmentEntityId: string;
+  investmentEntityName: string;
+  investmentDirection: string;
+  domesticOverseas: string;
+  investmentMethod: string;
+  majorProject: '' | 'yes' | 'no';
+  currencyCode: string;
+  projectTotalInvestment: string;
+  plannedInvestment: string;
+  expectedReturnRate: string;
+  fundingCompanyOwned: string;
+  fundingGroupRequested: string;
+  fundingSpecialBond: string;
+  fundingGovernment: string;
+  fundingLoan: string;
+  fundingOther: string;
+  annualPlannedInvestment: string;
+}

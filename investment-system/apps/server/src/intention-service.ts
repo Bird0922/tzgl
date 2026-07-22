@@ -6,7 +6,12 @@ import {
   type Actor,
   type IntentionInput
 } from './types.js';
-import { approveTransition, formatApplicationNo, returnTransition } from './workflow.js';
+import {
+  approveTransition,
+  formatApplicationNo,
+  returnTransition,
+  submitTransition
+} from './workflow.js';
 
 interface IntentionRow extends RowDataPacket {
   id: string;
@@ -192,7 +197,8 @@ export class IntentionService {
     if (current.status !== IntentionStatus.PendingSend && current.status !== IntentionStatus.Returned) {
       throw new AppError('当前状态不允许发送', 409, 'INVALID_STATUS');
     }
-    await this.transition(id, current, 'SUBMIT', IntentionStatus.InReview, 1, actor, null);
+    const next = submitTransition(current.current_stage, actor.role);
+    await this.transition(id, current, 'SUBMIT', next.status, next.nextStage, actor, null);
     return this.get(id);
   }
 

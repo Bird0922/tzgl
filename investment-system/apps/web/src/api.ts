@@ -1,4 +1,11 @@
-import type { Actor, IntentionDetail, IntentionForm } from './types';
+import type {
+  Actor,
+  ApprovalPolicy,
+  GroupDecisionApplicationDetail,
+  GroupDecisionApplicationForm,
+  IntentionDetail,
+  IntentionForm
+} from './types';
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://127.0.0.1:3000/api/v1';
 
@@ -22,6 +29,12 @@ async function request<T>(
       'x-user-id': actor.id,
       'x-user-name': encodeURIComponent(actor.name),
       'x-user-role': actor.role,
+      ...(actor.unitId ? { 'x-user-unit-id': actor.unitId } : {}),
+      ...(actor.unitName ? { 'x-user-unit-name': encodeURIComponent(actor.unitName) } : {}),
+      ...(actor.departmentId ? { 'x-user-department-id': actor.departmentId } : {}),
+      ...(actor.departmentName
+        ? { 'x-user-department-name': encodeURIComponent(actor.departmentName) }
+        : {}),
       ...init.headers
     }
   });
@@ -37,6 +50,86 @@ export function createIntention(payload: object, actor: Actor) {
     method: 'POST',
     body: JSON.stringify(payload)
   });
+}
+
+export function getGlobalApprovalPolicy(actor: Actor) {
+  return request<ApprovalPolicy>('/approval-policy', actor);
+}
+
+export function createGroupDecisionApplication(payload: object, actor: Actor) {
+  return request<GroupDecisionApplicationDetail>('/group-decision-applications', actor, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function updateGroupDecisionApplication(id: string, payload: object, actor: Actor) {
+  return request<GroupDecisionApplicationDetail>(`/group-decision-applications/${id}`, actor, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export function submitGroupDecisionApplication(id: string, actor: Actor) {
+  return request<GroupDecisionApplicationDetail>(
+    `/group-decision-applications/${id}/submit`,
+    actor,
+    { method: 'POST', body: '{}' }
+  );
+}
+
+export function approveGroupDecisionApplication(
+  id: string,
+  comment: string,
+  actor: Actor
+) {
+  return request<GroupDecisionApplicationDetail>(
+    `/group-decision-applications/${id}/approve`,
+    actor,
+    { method: 'POST', body: JSON.stringify({ comment: comment || null }) }
+  );
+}
+
+export function returnGroupDecisionApplication(
+  id: string,
+  comment: string,
+  actor: Actor
+) {
+  return request<GroupDecisionApplicationDetail>(
+    `/group-decision-applications/${id}/return`,
+    actor,
+    { method: 'POST', body: JSON.stringify({ comment: comment || null }) }
+  );
+}
+
+export function groupDecisionPayloadFromForm(form: GroupDecisionApplicationForm) {
+  return {
+    applicationDate: form.applicationDate || null,
+    applicationYear: form.applicationYear || null,
+    projectName: form.projectName || null,
+    projectCode: form.projectCode || null,
+    projectLeaderUserId: form.projectLeaderUserId || null,
+    projectLeaderName: form.projectLeaderName || null,
+    plannedStartDate: form.plannedStartDate || null,
+    plannedEndDate: form.plannedEndDate || null,
+    investmentEntityId: form.investmentEntityId || null,
+    investmentEntityName: form.investmentEntityName || null,
+    investmentDirection: form.investmentDirection || null,
+    domesticOverseas: form.domesticOverseas || null,
+    investmentMethod: form.investmentMethod || null,
+    majorProject: form.majorProject === '' ? null : form.majorProject === 'yes',
+    currencyCode: form.currencyCode || null,
+    projectTotalInvestment: form.projectTotalInvestment || null,
+    plannedInvestment: form.plannedInvestment || null,
+    expectedReturnRate: form.expectedReturnRate || null,
+    fundingCompanyOwned: form.fundingCompanyOwned || null,
+    fundingGroupRequested: form.fundingGroupRequested || null,
+    fundingSpecialBond: form.fundingSpecialBond || null,
+    fundingGovernment: form.fundingGovernment || null,
+    fundingLoan: form.fundingLoan || null,
+    fundingOther: form.fundingOther || null,
+    annualPlannedInvestment: form.annualPlannedInvestment || null
+  };
 }
 
 export function updateIntention(id: string, payload: object, actor: Actor) {
@@ -110,4 +203,3 @@ export function payloadFromForm(form: IntentionForm) {
     expectedReturnRate: form.expectedReturnRate || null
   };
 }
-

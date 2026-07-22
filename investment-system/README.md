@@ -1,6 +1,6 @@
 # 投资管理系统
 
-当前版本完成了“股权投资意向登记”的第一条正式全栈业务闭环。
+当前版本已完成“股权投资意向登记”和“集团决策申请”的全栈业务闭环。
 
 ## 已实现范围
 
@@ -9,11 +9,13 @@
 - MySQL 持久化
 - `TZ-年度-月份-4位序号` 并发安全编号
 - 保存待发、发送、同意、退回
-- 固定审批路线：业务发起人 → 投资部门负责人 → 投资部门分管领导
+- 全局审批策略：所有单据统一按“经办人 → 经办部门负责人 → 经办部门分管领导”流转
 - 审批历史记录
 - 调研报告附件上传与下载
 - 数据版本控制，避免多人同时修改时相互覆盖
 - 版本化数据库迁移
+- 集团决策申请及资金计划
+- 集团决策申请的数据权限、输入校验和全局审批策略复用
 
 ## 技术结构
 
@@ -60,6 +62,14 @@ pnpm dev
 
 ```text
 GET    /api/v1/investment-intentions
+GET    /api/v1/approval-policy
+GET    /api/v1/group-decision-applications
+POST   /api/v1/group-decision-applications
+GET    /api/v1/group-decision-applications/:id
+PUT    /api/v1/group-decision-applications/:id
+POST   /api/v1/group-decision-applications/:id/submit
+POST   /api/v1/group-decision-applications/:id/approve
+POST   /api/v1/group-decision-applications/:id/return
 POST   /api/v1/investment-intentions
 GET    /api/v1/investment-intentions/:id
 PUT    /api/v1/investment-intentions/:id
@@ -82,9 +92,16 @@ X-User-Role
 
 角色值包括：
 
-- `initiator`：业务发起人
-- `department_head`：投资部门负责人
-- `division_leader`：投资部门分管领导
+- `initiator`：经办人
+- `department_head`：经办部门负责人
+- `division_leader`：经办部门分管领导
+
+后续新增单据必须复用后端 `GLOBAL_APPROVAL_POLICY`，不得在各业务模块中另建审批节点顺序。
+
+集团决策申请页面：
+
+```text
+http://127.0.0.1:5173/?document=group-decision-application
+```
 
 前端的“办理身份”切换仅用于当前开发联调。进入下一阶段后，应替换为正式登录、组织、岗位、角色和数据权限体系。
-

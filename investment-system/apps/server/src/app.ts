@@ -8,8 +8,38 @@ import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
 import { config } from './config.js';
+import { GroupDecisionApplicationService } from './group-decision-application-service-20260722.js';
 import { IntentionService } from './intention-service.js';
-import { AppError, type Actor, type IntentionInput, type UserRole } from './types.js';
+import {
+  AppError,
+  type Actor,
+  type GroupDecisionApplicationInput,
+  type IntentionInput,
+  type UserRole
+} from './types.js';
+import { GLOBAL_APPROVAL_POLICY } from './workflow.js';
+
+function decodedHeader(value: string | string[] | undefined, fallback: string): string {
+  try {
+    return decodeURIComponent(String(value ?? fallback));
+  } catch {
+    throw new AppError('用户上下文编码无效', 400, 'INVALID_ACTOR');
+  }
+}
+
+function boundedHeader(
+  value: string | string[] | undefined,
+  fallback: string,
+  field: string,
+  maxLength: number,
+  decode = false
+): string {
+  const text = decode ? decodedHeader(value, fallback) : String(value ?? fallback);
+  if (!text || text.length > maxLength || /[\u0000-\u001f\u007f]/.test(text)) {
+    throw new AppError(`${field}格式无效`, 400, 'INVALID_ACTOR');
+  }
+  return text;
+}
 
 function actorFrom(request: FastifyRequest): Actor {
   const role = String(request.headers['x-user-role'] ?? 'initiator') as UserRole;
@@ -17,20 +47,51 @@ function actorFrom(request: FastifyRequest): Actor {
     throw new AppError('用户角色无效', 400, 'INVALID_ROLE');
   }
   return {
-    id: String(request.headers['x-user-id'] ?? 'user-admin'),
-    name: decodeURIComponent(String(request.headers['x-user-name'] ?? '综合管理员')),
-    role
+    id: boundedHeader(request.headers['x-user-id'], 'user-admin', '用户ID', 64),
+    name: boundedHeader(request.headers['x-user-name'], '综合管理员', '用户姓名', 128, true),
+    role,
+    unitId: boundedHeader(request.headers['x-user-unit-id'], 'org-yuanwang', '单位ID', 64),
+    unitName: boundedHeader(
+      request.headers['x-user-unit-name'],
+      '远望实业集团有限公司',
+      '单位名称',
+      255,
+      true
+    ),
+    departmentId: boundedHeader(
+      request.headers['x-user-department-id'],
+      'dept-collaboration-cloud',
+      '部门ID',
+      64
+    ),
+    departmentName: boundedHeader(
+      request.headers['x-user-department-name'],
+      '协同云体验',
+      '部门名称',
+      255,
+      true
+    )
   };
 }
 
 export async function buildApp(pool: Pool) {
   const app = Fastify({ logger: true });
   const service = new IntentionService(pool);
+  const groupDecisionService = new GroupDecisionApplicationService(pool);
 
   await app.register(cors, {
     origin: config.webOrigin,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'X-User-Id', 'X-User-Name', 'X-User-Role']
+    allowedHeaders: [
+      'Content-Type',
+      'X-User-Id',
+      'X-User-Name',
+      'X-User-Role',
+      'X-User-Unit-Id',
+      'X-User-Unit-Name',
+      'X-User-Department-Id',
+      'X-User-Department-Name'
+    ]
   });
   await app.register(multipart, {
     limits: { files: 10, fileSize: 20 * 1024 * 1024 }
@@ -49,6 +110,73 @@ export async function buildApp(pool: Pool) {
   });
 
   app.get('/api/v1/health', async () => ({ success: true, data: { status: 'ok' } }));
+
+  app.get('/api/v1/approval-policy', async () => ({
+    success: true,
+    data: GLOBAL_APPROVAL_POLICY
+  }));
+
+  app.get('/api/v1/group-decision-applications', async request => ({
+    success: true,
+    data: await groupDecisionService.list(actorFrom(request))
+  }));
+
+  app.get<{ Params: { id: string } }>('/api/v1/group-decision-applications/:id', async request => ({
+    success: true,
+    data: await groupDecisionService.get(request.params.id, actorFrom(request))
+  }));
+
+  app.post<{ Body: GroupDecisionApplicationInput }>(
+    '/api/v1/group-decision-applications',
+    async (request, reply) => {
+      const data = await groupDecisionService.create(request.body ?? {}, actorFrom(request));
+      return reply.status(201).send({ success: true, data });
+    }
+  );
+
+  app.put<{ Params: { id: string }; Body: GroupDecisionApplicationInput }>(
+    '/api/v1/group-decision-applications/:id',
+    async request => ({
+      success: true,
+      data: await groupDecisionService.update(
+        request.params.id,
+        request.body ?? {},
+        actorFrom(request)
+      )
+    })
+  );
+
+  app.post<{ Params: { id: string } }>(
+    '/api/v1/group-decision-applications/:id/submit',
+    async request => ({
+      success: true,
+      data: await groupDecisionService.submit(request.params.id, actorFrom(request))
+    })
+  );
+
+  app.post<{ Params: { id: string }; Body: { comment?: string | null } }>(
+    '/api/v1/group-decision-applications/:id/approve',
+    async request => ({
+      success: true,
+      data: await groupDecisionService.approve(
+        request.params.id,
+        actorFrom(request),
+        request.body?.comment ?? null
+      )
+    })
+  );
+
+  app.post<{ Params: { id: string }; Body: { comment?: string | null } }>(
+    '/api/v1/group-decision-applications/:id/return',
+    async request => ({
+      success: true,
+      data: await groupDecisionService.returnToInitiator(
+        request.params.id,
+        actorFrom(request),
+        request.body?.comment ?? null
+      )
+    })
+  );
 
   app.get('/api/v1/investment-intentions', async () => ({ success: true, data: await service.list() }));
 

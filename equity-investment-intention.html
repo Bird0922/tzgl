@@ -772,19 +772,19 @@
             <div class="workflow-route" id="workflowRoute">
               <div class="workflow-step active" data-step="0">
                 <div class="step-icon">1</div>
-                <div class="step-name">业务发起人</div>
+                <div class="step-name">经办人</div>
                 <div class="step-role">综合管理员</div>
               </div>
               <div class="workflow-line" data-line="0"></div>
               <div class="workflow-step" data-step="1">
                 <div class="step-icon">2</div>
-                <div class="step-name">投资部门负责人</div>
+                <div class="step-name">经办部门负责人</div>
                 <div class="step-role">审核</div>
               </div>
               <div class="workflow-line" data-line="1"></div>
               <div class="workflow-step" data-step="2">
                 <div class="step-icon">3</div>
-                <div class="step-name">投资部门分管领导</div>
+                <div class="step-name">经办部门分管领导</div>
                 <div class="step-role">审核</div>
               </div>
             </div>
@@ -933,7 +933,7 @@
       setStatus('审核中');
       updateWorkflow(currentStage);
       localStorage.setItem(storageKey, JSON.stringify(collectFormData()));
-      showToast('已发送至投资部门负责人');
+      showToast('已发送至经办部门负责人');
     });
 
     document.getElementById('approveButton').addEventListener('click', () => {
@@ -943,7 +943,7 @@
       if (currentStage === 1) {
         currentStage = 2;
         setStatus('审核中');
-        showToast('已同意，流转至投资部门分管领导');
+        showToast('已同意，流转至经办部门分管领导');
       } else {
         currentStage = 3;
         setStatus('已通过');
@@ -960,7 +960,7 @@
       setStatus('已退回');
       updateWorkflow(currentStage);
       localStorage.setItem(storageKey, JSON.stringify(collectFormData()));
-      showToast('已退回业务发起人');
+      showToast('已退回经办人');
     });
 
     document.getElementById('researchReport').addEventListener('change', event => {
