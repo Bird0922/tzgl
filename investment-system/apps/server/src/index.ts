@@ -6,5 +6,4 @@ const pool = createPool();
 await runMigrations(pool);
 const app = await buildApp(pool);
 
-await app.listen({ host: '127.0.0.1', port: config.serverPort });
-
+await app.listen({ host: config.serverHost, port: config.serverPort });

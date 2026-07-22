@@ -11,27 +11,16 @@ export type IntentionStatusValue = typeof IntentionStatus[keyof typeof Intention
 
 export type UserRole = 'initiator' | 'department_head' | 'division_leader';
 
-export interface Actor {
-  id: string;
-  name: string;
-  role: UserRole;
-  unitId?: string;
-  unitName?: string;
-  departmentId?: string;
-  departmentName?: string;
-}
-
 export interface GroupDecisionApplicationInput {
+  version?: number;
   applicationDate?: string | null;
   applicationYear?: string | number | null;
   projectName?: string | null;
   projectCode?: string | null;
   projectLeaderUserId?: string | null;
-  projectLeaderName?: string | null;
   plannedStartDate?: string | null;
   plannedEndDate?: string | null;
   investmentEntityId?: string | null;
-  investmentEntityName?: string | null;
   investmentDirection?: string | null;
   domesticOverseas?: string | null;
   investmentMethod?: string | null;
@@ -49,7 +38,27 @@ export interface GroupDecisionApplicationInput {
   annualPlannedInvestment?: string | number | null;
 }
 
+export type EntityStatus = 'ACTIVE' | 'DISABLED';
+
+export interface AuthUser {
+  id: string;
+  employeeNo: string;
+  username: string;
+  name: string;
+  departmentId: string | null;
+  positionId: string | null;
+  mustChangePassword: boolean;
+  permissions: string[];
+}
+
+export interface AuthContext {
+  user: AuthUser;
+  sessionId: string;
+  csrfTokenHash: string;
+}
+
 export interface IntentionInput {
+  version?: number;
   applicantUserId?: string | null;
   applicantName?: string | null;
   investmentEntityId?: string | null;

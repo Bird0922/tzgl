@@ -1,0 +1,1012 @@
+openapi: 3.1.0
+info:
+  title: 投资管理系统统一接口契约
+  version: 1.1.0
+  description: |
+    LTC 投资管理系统正式接口契约。认证使用 HttpOnly Cookie，会话写操作同时校验 X-CSRF-Token。
+    所有投资业务单据统一按“经办人、经办部门负责人、经办部门分管领导”顺序流转。
+servers:
+  - url: http://127.0.0.1:3000/api/v1
+    description: 本地及部署环境 API 基地址
+security:
+  - cookieAuth: []
+
+x-ok-responses: &okResponses
+  '200':
+    description: 操作成功
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/SuccessResponse'
+  '400':
+    $ref: '#/components/responses/BadRequest'
+  '401':
+    $ref: '#/components/responses/Unauthenticated'
+  '403':
+    $ref: '#/components/responses/Forbidden'
+  '404':
+    $ref: '#/components/responses/NotFound'
+  '409':
+    $ref: '#/components/responses/Conflict'
+  '500':
+    $ref: '#/components/responses/InternalError'
+
+x-created-responses: &createdResponses
+  '201':
+    description: 创建成功
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/SuccessResponse'
+  '400':
+    $ref: '#/components/responses/BadRequest'
+  '401':
+    $ref: '#/components/responses/Unauthenticated'
+  '403':
+    $ref: '#/components/responses/Forbidden'
+  '409':
+    $ref: '#/components/responses/Conflict'
+  '500':
+    $ref: '#/components/responses/InternalError'
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: 查询服务健康状态
+      x-permissions: []
+      security: []
+      responses: *okResponses
+
+  /setup/status:
+    get:
+      operationId: getSetupStatus
+      summary: 查询系统是否已完成首次初始化
+      x-permissions: []
+      security: []
+      responses: *okResponses
+
+  /setup/initialize:
+    post:
+      operationId: initializeSystem
+      summary: 在服务器本机首次初始化系统管理员
+      x-permissions: []
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupInput'
+      responses: *createdResponses
+
+  /auth/login:
+    post:
+      operationId: login
+      summary: 使用用户名和密码登录
+      x-permissions: []
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginInput'
+      responses: *okResponses
+
+  /auth/me:
+    get:
+      operationId: getCurrentSession
+      summary: 查询当前登录用户、权限和 CSRF 令牌
+      x-permissions: [authenticated]
+      responses: *okResponses
+
+  /auth/logout:
+    post:
+      operationId: logout
+      summary: 注销当前登录会话
+      x-permissions: [authenticated]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      responses: *okResponses
+
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      summary: 修改当前用户密码并撤销已有会话
+      x-permissions: [authenticated]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordInput'
+      responses: *okResponses
+
+  /admin/units:
+    get:
+      operationId: listAdminUnits
+      summary: 分页查询后台单位
+      x-permissions: [admin.unit.read]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses: *okResponses
+    post:
+      operationId: createAdminUnit
+      summary: 创建单位
+      x-permissions: [admin.unit.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitInput'
+      responses: *createdResponses
+
+  /admin/units/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    put:
+      operationId: updateAdminUnit
+      summary: 修改单位
+      x-permissions: [admin.unit.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitUpdateInput'
+      responses: *okResponses
+    delete:
+      operationId: deleteAdminUnit
+      summary: 删除未被引用的单位
+      x-permissions: [admin.unit.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      responses: *okResponses
+
+  /admin/departments:
+    get:
+      operationId: listAdminDepartments
+      summary: 分页查询后台部门
+      x-permissions: [admin.department.read]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses: *okResponses
+    post:
+      operationId: createAdminDepartment
+      summary: 创建部门并配置审批负责人
+      x-permissions: [admin.department.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentInput'
+      responses: *createdResponses
+
+  /admin/departments/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    put:
+      operationId: updateAdminDepartment
+      summary: 修改部门及审批负责人配置
+      x-permissions: [admin.department.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DepartmentUpdateInput'
+      responses: *okResponses
+    delete:
+      operationId: deleteAdminDepartment
+      summary: 删除未被引用的部门
+      x-permissions: [admin.department.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      responses: *okResponses
+
+  /admin/positions:
+    get:
+      operationId: listAdminPositions
+      summary: 分页查询后台岗位
+      x-permissions: [admin.position.read]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses: *okResponses
+    post:
+      operationId: createAdminPosition
+      summary: 创建岗位
+      x-permissions: [admin.position.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionInput'
+      responses: *createdResponses
+
+  /admin/positions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    put:
+      operationId: updateAdminPosition
+      summary: 修改岗位
+      x-permissions: [admin.position.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PositionUpdateInput'
+      responses: *okResponses
+    delete:
+      operationId: deleteAdminPosition
+      summary: 删除未被引用的岗位
+      x-permissions: [admin.position.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      responses: *okResponses
+
+  /admin/permissions:
+    get:
+      operationId: listPermissions
+      summary: 查询系统固定权限点
+      x-permissions: [admin.role.read]
+      responses: *okResponses
+
+  /admin/roles:
+    get:
+      operationId: listAdminRoles
+      summary: 分页查询角色及授权
+      x-permissions: [admin.role.read]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses: *okResponses
+    post:
+      operationId: createAdminRole
+      summary: 创建角色并分配权限
+      x-permissions: [admin.role.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleInput'
+      responses: *createdResponses
+
+  /admin/roles/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    put:
+      operationId: updateAdminRole
+      summary: 修改角色及权限
+      x-permissions: [admin.role.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleUpdateInput'
+      responses: *okResponses
+    delete:
+      operationId: deleteAdminRole
+      summary: 删除非系统角色
+      x-permissions: [admin.role.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      responses: *okResponses
+
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      summary: 分页查询人员账号
+      x-permissions: [admin.user.read]
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses: *okResponses
+    post:
+      operationId: createAdminUser
+      summary: 创建人员账号并分配角色
+      x-permissions: [admin.user.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses: *createdResponses
+
+  /admin/users/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    put:
+      operationId: updateAdminUser
+      summary: 修改人员、组织归属、状态和角色
+      x-permissions: [admin.user.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses: *okResponses
+    delete:
+      operationId: deleteAdminUser
+      summary: 删除未被业务引用的人员账号
+      x-permissions: [admin.user.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      responses: *okResponses
+
+  /admin/users/{id}/reset-password:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      operationId: resetAdminUserPassword
+      summary: 重置人员密码并撤销其会话
+      x-permissions: [admin.user.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordInput'
+      responses: *okResponses
+
+  /directory/units:
+    get:
+      operationId: listDirectoryUnits
+      summary: 查询业务表单可选择的启用单位
+      x-permissions: [investment.intention.create, investment.intention.update, investment.group_decision.create, investment.group_decision.update, admin.unit.read]
+      responses: *okResponses
+
+  /directory/users:
+    get:
+      operationId: listDirectoryUsers
+      summary: 查询业务表单可选择的启用人员
+      x-permissions: [investment.intention.create, investment.intention.update, investment.group_decision.create, investment.group_decision.update, admin.user.read, admin.department.manage]
+      parameters:
+        - name: unitId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: departmentId
+          in: query
+          schema: { type: string, format: uuid }
+        - name: permission
+          in: query
+          schema: { type: string, maxLength: 128 }
+      responses: *okResponses
+
+  /investment-intentions:
+    get:
+      operationId: listInvestmentIntentions
+      summary: 分页查询我的发起、我的待办或全部投资意向
+      x-permissions: [investment.intention.read, investment.intention.read_all]
+      parameters:
+        - $ref: '#/components/parameters/Mode'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses: *okResponses
+    post:
+      operationId: createInvestmentIntention
+      summary: 创建股权投资意向待发单
+      x-permissions: [investment.intention.create]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntentionInput'
+      responses: *createdResponses
+
+  /investment-intentions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    get:
+      operationId: getInvestmentIntention
+      summary: 查询有权访问的投资意向详情
+      x-permissions: [investment.intention.read, investment.intention.read_all]
+      responses: *okResponses
+    put:
+      operationId: updateInvestmentIntention
+      summary: 修改本人待发或退回的投资意向
+      x-permissions: [investment.intention.update]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IntentionUpdateInput'
+      responses: *okResponses
+
+  /investment-intentions/{id}/submit:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      operationId: submitInvestmentIntention
+      summary: 提交投资意向至经办部门负责人
+      x-permissions: [investment.intention.submit]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      responses: *okResponses
+
+  /investment-intentions/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      operationId: approveInvestmentIntention
+      summary: 指定部门负责人或分管领导同意投资意向
+      x-permissions: [investment.intention.approve_department, investment.intention.approve_supervising]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewInput'
+      responses: *okResponses
+
+  /investment-intentions/{id}/return:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      operationId: returnInvestmentIntention
+      summary: 指定部门负责人或分管领导退回投资意向
+      x-permissions: [investment.intention.approve_department, investment.intention.approve_supervising]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewInput'
+      responses: *okResponses
+
+  /investment-intentions/{id}/attachments:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      operationId: uploadInvestmentIntentionAttachment
+      summary: 为本人可编辑的投资意向上传安全校验后的附件
+      x-permissions: [investment.attachment.manage]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses: *createdResponses
+
+  /attachments/{id}/download:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    get:
+      operationId: downloadInvestmentAttachment
+      summary: 下载有业务查看权限的投资意向附件
+      x-permissions: [investment.attachment.read]
+      responses: *okResponses
+
+  /group-decision-applications:
+    get:
+      operationId: listGroupDecisionApplications
+      summary: 分页查询我的发起、我的待办或全部集团决策申请
+      x-permissions: [investment.group_decision.read, investment.group_decision.read_all]
+      parameters:
+        - $ref: '#/components/parameters/Mode'
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses: *okResponses
+    post:
+      operationId: createGroupDecisionApplication
+      summary: 创建集团决策申请待发单
+      x-permissions: [investment.group_decision.create]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupDecisionInput'
+            examples:
+              createRequest:
+                summary: 集团决策申请创建请求
+                externalValue: ./examples/20260722_153405_group-decision_create-request_idi.json
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupDecisionDetailResponse'
+              examples:
+                createdDetail:
+                  summary: 集团决策申请详情
+                  externalValue: ./examples/20260722_153405_group-decision_detail-response_idi.json
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /group-decision-applications/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    get:
+      operationId: getGroupDecisionApplication
+      summary: 查询有权访问的集团决策申请详情
+      x-permissions: [investment.group_decision.read, investment.group_decision.read_all]
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupDecisionDetailResponse'
+              examples:
+                detail:
+                  externalValue: ./examples/20260722_153405_group-decision_detail-response_idi.json
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      operationId: updateGroupDecisionApplication
+      summary: 修改本人待发或退回的集团决策申请
+      x-permissions: [investment.group_decision.update]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupDecisionUpdateInput'
+      responses: *okResponses
+
+  /group-decision-applications/{id}/submit:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      operationId: submitGroupDecisionApplication
+      summary: 提交集团决策申请至经办部门负责人
+      x-permissions: [investment.group_decision.submit]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      responses: *okResponses
+
+  /group-decision-applications/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      operationId: approveGroupDecisionApplication
+      summary: 指定经办部门负责人或分管领导同意集团决策申请
+      x-permissions: [investment.group_decision.approve_department, investment.group_decision.approve_supervising]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewInput'
+      responses: *okResponses
+
+  /group-decision-applications/{id}/return:
+    parameters:
+      - $ref: '#/components/parameters/IdPath'
+    post:
+      operationId: returnGroupDecisionApplication
+      summary: 指定经办部门负责人或分管领导退回集团决策申请
+      x-permissions: [investment.group_decision.approve_department, investment.group_decision.approve_supervising]
+      parameters:
+        - $ref: '#/components/parameters/CsrfHeader'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewInput'
+      responses: *okResponses
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: ltc_session
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    CsrfHeader:
+      name: X-CSRF-Token
+      in: header
+      required: true
+      schema: { type: string, minLength: 64, maxLength: 64 }
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    PageSize:
+      name: pageSize
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Mode:
+      name: mode
+      in: query
+      schema: { type: string, enum: [mine, todo, all], default: mine }
+  responses:
+    BadRequest:
+      description: 请求字段、格式或业务规则无效
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+          examples:
+            error:
+              externalValue: ./examples/20260722_153405_api-error-response_idi.json
+    Unauthenticated:
+      description: 未登录或会话已失效
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Forbidden:
+      description: CSRF 校验失败、缺少权限或数据越权
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Conflict:
+      description: 状态冲突、版本冲突或组织审批配置不完整
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    InternalError:
+      description: 服务器内部错误，不返回堆栈、SQL 或文件路径
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+  schemas:
+    SuccessResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success: { type: boolean, const: true }
+        data: {}
+    ErrorResponse:
+      type: object
+      required: [success, data, code, message]
+      properties:
+        success: { type: boolean, const: false }
+        data: { type: 'null' }
+        code: { type: string, maxLength: 100 }
+        message: { type: string, maxLength: 500 }
+    SetupInput:
+      type: object
+      additionalProperties: false
+      required: [employeeNo, username, displayName, password]
+      properties:
+        employeeNo: { type: string, maxLength: 64 }
+        username: { type: string, maxLength: 100 }
+        displayName: { type: string, maxLength: 100 }
+        password: { type: string, minLength: 12, maxLength: 128, format: password }
+    LoginInput:
+      type: object
+      additionalProperties: false
+      required: [username, password]
+      properties:
+        username: { type: string, maxLength: 100 }
+        password: { type: string, maxLength: 128, format: password }
+    ChangePasswordInput:
+      type: object
+      additionalProperties: false
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: { type: string, maxLength: 128, format: password }
+        newPassword: { type: string, minLength: 12, maxLength: 128, format: password }
+    ResetPasswordInput:
+      type: object
+      additionalProperties: false
+      required: [password]
+      properties:
+        password: { type: string, minLength: 12, maxLength: 128, format: password }
+    EntityStatus:
+      type: string
+      enum: [ACTIVE, DISABLED]
+    UnitInput:
+      type: object
+      additionalProperties: false
+      required: [code, name, status, sortOrder]
+      properties:
+        parentId: { type: [string, 'null'], format: uuid }
+        code: { type: string, maxLength: 64 }
+        name: { type: string, maxLength: 200 }
+        status: { $ref: '#/components/schemas/EntityStatus' }
+        sortOrder: { type: integer, minimum: 0 }
+    UnitUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/UnitInput'
+        - type: object
+          required: [version]
+          properties:
+            version: { type: integer, minimum: 1 }
+    DepartmentInput:
+      type: object
+      additionalProperties: false
+      required: [unitId, code, name, status, sortOrder]
+      properties:
+        unitId: { type: string, format: uuid }
+        code: { type: string, maxLength: 64 }
+        name: { type: string, maxLength: 200 }
+        departmentHeadUserId: { type: [string, 'null'], format: uuid }
+        supervisingLeaderUserId: { type: [string, 'null'], format: uuid }
+        status: { $ref: '#/components/schemas/EntityStatus' }
+        sortOrder: { type: integer, minimum: 0 }
+    DepartmentUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/DepartmentInput'
+        - type: object
+          required: [version]
+          properties:
+            version: { type: integer, minimum: 1 }
+    PositionInput:
+      type: object
+      additionalProperties: false
+      required: [departmentId, code, name, status, sortOrder]
+      properties:
+        departmentId: { type: string, format: uuid }
+        code: { type: string, maxLength: 64 }
+        name: { type: string, maxLength: 200 }
+        status: { $ref: '#/components/schemas/EntityStatus' }
+        sortOrder: { type: integer, minimum: 0 }
+    PositionUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/PositionInput'
+        - type: object
+          required: [version]
+          properties:
+            version: { type: integer, minimum: 1 }
+    RoleInput:
+      type: object
+      additionalProperties: false
+      required: [code, name, status, permissionCodes]
+      properties:
+        code: { type: string, maxLength: 64 }
+        name: { type: string, maxLength: 200 }
+        description: { type: [string, 'null'], maxLength: 500 }
+        status: { $ref: '#/components/schemas/EntityStatus' }
+        permissionCodes:
+          type: array
+          uniqueItems: true
+          items: { type: string, maxLength: 128 }
+    RoleUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/RoleInput'
+        - type: object
+          required: [version]
+          properties:
+            version: { type: integer, minimum: 1 }
+    UserInput:
+      type: object
+      additionalProperties: false
+      required: [employeeNo, username, displayName, password, status, roleIds]
+      properties:
+        employeeNo: { type: string, maxLength: 64 }
+        username: { type: string, maxLength: 100 }
+        displayName: { type: string, maxLength: 100 }
+        password: { type: string, minLength: 12, maxLength: 128, format: password }
+        mobile: { type: [string, 'null'], maxLength: 32 }
+        email: { type: [string, 'null'], maxLength: 200, format: email }
+        departmentId: { type: [string, 'null'], format: uuid }
+        positionId: { type: [string, 'null'], format: uuid }
+        status: { $ref: '#/components/schemas/EntityStatus' }
+        roleIds:
+          type: array
+          uniqueItems: true
+          items: { type: string, format: uuid }
+    UserUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/UserInput'
+        - type: object
+          required: [version]
+          properties:
+            password: false
+            version: { type: integer, minimum: 1 }
+    ReviewInput:
+      type: object
+      additionalProperties: false
+      properties:
+        comment: { type: [string, 'null'], maxLength: 2000 }
+    IntentionInput:
+      type: object
+      additionalProperties: false
+      properties:
+        investmentEntityId: { type: [string, 'null'], format: uuid }
+        applicationDate: { type: [string, 'null'], format: date }
+        projectName: { type: [string, 'null'], maxLength: 300 }
+        investmentMethod: { type: [string, 'null'], maxLength: 32 }
+        majorProject: { type: [boolean, 'null'] }
+        plannedStartDate: { type: [string, 'null'], format: date }
+        plannedEndDate: { type: [string, 'null'], format: date }
+        projectLeaderUserId: { type: [string, 'null'], format: uuid }
+        contactPhone: { type: [string, 'null'], maxLength: 50 }
+        projectLocation: { type: [string, 'null'], maxLength: 500 }
+        projectSummary: { type: [string, 'null'], maxLength: 65535 }
+        mainContent: { type: [string, 'null'], maxLength: 65535 }
+        targetCompanyId: { type: [string, 'null'], maxLength: 64 }
+        targetCompanyName: { type: [string, 'null'], maxLength: 300 }
+        mainBusiness: { type: [string, 'null'], maxLength: 1000 }
+        investmentDirection: { type: [string, 'null'], maxLength: 64 }
+        domesticOverseas: { type: [string, 'null'], enum: [DOMESTIC, OVERSEAS, null] }
+        currencyCode: { type: [string, 'null'], maxLength: 8 }
+        exchangeRate: { type: [string, number, 'null'] }
+        plannedShareholdingRatio: { type: [string, number, 'null'] }
+        projectTotalInvestment: { type: [string, number, 'null'] }
+        plannedInvestment: { type: [string, number, 'null'] }
+        expectedReturnRate: { type: [string, number, 'null'] }
+    IntentionUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/IntentionInput'
+        - type: object
+          required: [version]
+          properties:
+            version: { type: integer, minimum: 1 }
+    GroupDecisionInput:
+      type: object
+      additionalProperties: false
+      properties:
+        applicationDate: { type: [string, 'null'], format: date }
+        applicationYear: { type: [integer, string, 'null'], minimum: 2000, maximum: 2100 }
+        projectName: { type: [string, 'null'], maxLength: 255 }
+        projectCode: { type: [string, 'null'], maxLength: 64 }
+        projectLeaderUserId: { type: [string, 'null'], format: uuid }
+        plannedStartDate: { type: [string, 'null'], format: date }
+        plannedEndDate: { type: [string, 'null'], format: date }
+        investmentEntityId: { type: [string, 'null'], format: uuid }
+        investmentDirection: { type: [string, 'null'], enum: [STRATEGIC, FINANCIAL, INDUSTRIAL, null] }
+        domesticOverseas: { type: [string, 'null'], enum: [DOMESTIC, OVERSEAS, null] }
+        investmentMethod: { type: [string, 'null'], enum: [EQUITY, FIXED_ASSET, FUND, OTHER, null] }
+        majorProject: { type: [boolean, 'null'] }
+        currencyCode: { type: [string, 'null'], enum: [CNY, USD, EUR, HKD, null] }
+        projectTotalInvestment: { $ref: '#/components/schemas/Money' }
+        plannedInvestment: { $ref: '#/components/schemas/Money' }
+        expectedReturnRate: { type: [string, number, 'null'], pattern: '^\\d{1,3}(\\.\\d{1,4})?$' }
+        fundingCompanyOwned: { $ref: '#/components/schemas/Money' }
+        fundingGroupRequested: { $ref: '#/components/schemas/Money' }
+        fundingSpecialBond: { $ref: '#/components/schemas/Money' }
+        fundingGovernment: { $ref: '#/components/schemas/Money' }
+        fundingLoan: { $ref: '#/components/schemas/Money' }
+        fundingOther: { $ref: '#/components/schemas/Money' }
+        annualPlannedInvestment: { $ref: '#/components/schemas/Money' }
+    GroupDecisionUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/GroupDecisionInput'
+        - type: object
+          required: [version]
+          properties:
+            version: { type: integer, minimum: 1 }
+    Money:
+      type: [string, number, 'null']
+      pattern: '^\\d{1,18}(\\.\\d{1,2})?$'
+    WorkflowHistory:
+      type: object
+      required: [id, action, fromStage, toStage, operatorId, operatorName, operatorRole, comment, createdAt]
+      properties:
+        id: { type: integer }
+        action: { type: string, enum: [SUBMIT, APPROVE, RETURN] }
+        fromStage: { type: integer, minimum: 0, maximum: 2 }
+        toStage: { type: integer, minimum: 0, maximum: 3 }
+        operatorId: { type: string, format: uuid }
+        operatorName: { type: string }
+        operatorRole: { type: string, enum: [initiator, department_head, division_leader] }
+        comment: { type: [string, 'null'], maxLength: 2000 }
+        createdAt: { type: string, format: date-time }
+    GroupDecisionDetail:
+      type: object
+      required: [id, applicationNo, applicantUserId, applicantName, applicationDate, applicationYear, status, currentStage, version, history, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        applicationNo: { type: string, pattern: '^JTJC-\\d{6}-\\d{4}$' }
+        applicantUserId: { type: string, format: uuid }
+        applicantName: { type: string }
+        applicantUnitId: { type: [string, 'null'], format: uuid }
+        applicantUnitName: { type: [string, 'null'] }
+        applicationDate: { type: string, format: date }
+        applicationYear: { type: integer, minimum: 2000, maximum: 2100 }
+        applicantDepartmentId: { type: [string, 'null'], format: uuid }
+        applicantDepartmentName: { type: [string, 'null'] }
+        projectName: { type: [string, 'null'] }
+        projectCode: { type: [string, 'null'] }
+        projectLeaderUserId: { type: [string, 'null'], format: uuid }
+        projectLeaderName: { type: [string, 'null'] }
+        plannedStartDate: { type: [string, 'null'], format: date }
+        plannedEndDate: { type: [string, 'null'], format: date }
+        investmentEntityId: { type: [string, 'null'], format: uuid }
+        investmentEntityName: { type: [string, 'null'] }
+        investmentDirection: { type: [string, 'null'] }
+        domesticOverseas: { type: [string, 'null'] }
+        investmentMethod: { type: [string, 'null'] }
+        majorProject: { type: [boolean, 'null'] }
+        currencyCode: { type: [string, 'null'] }
+        projectTotalInvestment: { type: [string, 'null'] }
+        plannedInvestment: { type: [string, 'null'] }
+        expectedReturnRate: { type: [string, 'null'] }
+        fundingCompanyOwned: { type: [string, 'null'] }
+        fundingGroupRequested: { type: [string, 'null'] }
+        fundingSpecialBond: { type: [string, 'null'] }
+        fundingGovernment: { type: [string, 'null'] }
+        fundingLoan: { type: [string, 'null'] }
+        fundingOther: { type: [string, 'null'] }
+        annualPlannedInvestment: { type: [string, 'null'] }
+        status: { type: string, enum: [PENDING_SEND, IN_REVIEW, APPROVED, RETURNED] }
+        currentStage: { type: integer, minimum: 0, maximum: 3 }
+        departmentHeadApproverId: { type: [string, 'null'], format: uuid }
+        supervisingLeaderApproverId: { type: [string, 'null'], format: uuid }
+        currentApproverUserId: { type: [string, 'null'], format: uuid }
+        version: { type: integer, minimum: 1 }
+        history:
+          type: array
+          items: { $ref: '#/components/schemas/WorkflowHistory' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    GroupDecisionDetailResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success: { type: boolean, const: true }
+        data: { $ref: '#/components/schemas/GroupDecisionDetail' }

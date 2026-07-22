@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "pnpm --parallel --filter @investment/server --filter @investment/web dev",
     "build": "pnpm -r build",
-    "test": "pnpm -r test"
+    "contracts:check": "node scripts/contracts_validate_20260722_153405_idi.mjs",
+    "test": "pnpm contracts:check && pnpm -r test"
   }
 }
