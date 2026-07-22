@@ -1,6 +1,6 @@
 # 投资管理系统
 
-当前版本包含股权投资意向登记、正式登录会话、RBAC 权限和后台组织人员管理。
+当前版本包含股权投资意向、集团决策申请、正式登录会话、RBAC 权限和后台组织人员管理。
 
 ## 已实现范围
 
@@ -8,11 +8,11 @@
 - 用户名密码登录、数据库会话、CSRF 校验和密码强制修改
 - 单位树、部门、岗位、角色、权限和人员管理
 - 登录锁定、会话撤销、最后一名系统管理员保护和安全审计
-- 我的发起、我的待办和全部投资意向
-- 申请人身份从当前会话取得，提交时固化部门负责人和分管领导
-- 保存待发、提交、部门负责人审批、分管领导审批和退回
-- 附件类型、签名、大小、数量、随机文件名和下载权限校验
-- 乐观锁版本控制和版本化 MySQL 迁移
+- 股权投资意向与集团决策申请的保存、提交、审批、退回和乐观锁控制
+- 所有业务单据统一按“经办人 → 经办部门负责人 → 经办部门分管领导”流转
+- 申请人身份来自当前会话，审批人由提交时的组织关系和权限固化
+- 投资意向附件类型、签名、大小、数量、随机文件名和下载权限校验
+- 版本化 MySQL 迁移与 OpenAPI 接口契约校验
 
 ## 技术结构
 
@@ -21,6 +21,7 @@ investment-system/
 ├── apps/
 │   ├── server/       Fastify + TypeScript 后端
 │   └── web/          Vue 3 + TypeScript 前端
+├── contracts/        OpenAPI 唯一接口契约与 JSON 示例
 ├── database/
 │   └── migrations/   MySQL 版本化迁移脚本
 ├── uploads/          本地附件目录，运行后生成
@@ -71,16 +72,22 @@ PUT/DELETE     /api/v1/admin/{resource}/:id
 POST           /api/v1/admin/users/:id/reset-password
 GET            /api/v1/admin/permissions
 
-GET    /api/v1/directory/units
-GET    /api/v1/directory/users
+GET            /api/v1/directory/units
+GET            /api/v1/directory/users
 
-GET/POST   /api/v1/investment-intentions
-GET/PUT    /api/v1/investment-intentions/:id
-POST       /api/v1/investment-intentions/:id/submit
-POST       /api/v1/investment-intentions/:id/approve
-POST       /api/v1/investment-intentions/:id/return
-POST       /api/v1/investment-intentions/:id/attachments
-GET        /api/v1/attachments/:id/download
+GET/POST       /api/v1/investment-intentions
+GET/PUT        /api/v1/investment-intentions/:id
+POST           /api/v1/investment-intentions/:id/submit
+POST           /api/v1/investment-intentions/:id/approve
+POST           /api/v1/investment-intentions/:id/return
+POST           /api/v1/investment-intentions/:id/attachments
+GET            /api/v1/attachments/:id/download
+
+GET/POST       /api/v1/group-decision-applications
+GET/PUT        /api/v1/group-decision-applications/:id
+POST           /api/v1/group-decision-applications/:id/submit
+POST           /api/v1/group-decision-applications/:id/approve
+POST           /api/v1/group-decision-applications/:id/return
 ```
 
 写接口必须携带当前会话对应的 `X-CSRF-Token`。浏览器会话使用 `HttpOnly`、`SameSite=Lax` Cookie；生产环境自动启用 `Secure`。
@@ -88,6 +95,7 @@ GET        /api/v1/attachments/:id/download
 ## 验证命令
 
 ```bash
+pnpm contracts:check
 pnpm test
 pnpm build
 pnpm audit --audit-level high

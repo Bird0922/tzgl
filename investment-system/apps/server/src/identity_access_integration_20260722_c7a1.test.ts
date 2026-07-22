@@ -181,10 +181,12 @@ integrationSuite('身份权限与投资审批数据库集成', () => {
       return responseBody<{ data: { id: string } }>(response).data;
     };
     const departmentRole = await createRole('DEPARTMENT_APPROVER', '部门负责人', [
-      'investment.intention.read', 'investment.intention.approve_department'
+      'investment.intention.read', 'investment.intention.approve_department',
+      'investment.group_decision.read', 'investment.group_decision.approve_department'
     ]);
     const supervisingRole = await createRole('SUPERVISING_APPROVER', '分管领导', [
-      'investment.intention.read', 'investment.intention.approve_supervising'
+      'investment.intention.read', 'investment.intention.approve_supervising',
+      'investment.group_decision.read', 'investment.group_decision.approve_supervising'
     ]);
 
     const createUser = async (
@@ -328,6 +330,55 @@ integrationSuite('身份权限与投资审批数据库集成', () => {
     );
     expect(finalApproval.statusCode).toBe(200);
     expect(responseBody<{ data: { status: string; currentStage: number; currentApproverUserId: null } }>(finalApproval).data)
+      .toMatchObject({ status: 'APPROVED', currentStage: 3, currentApproverUserId: null });
+
+    const groupDecisionResponse = await authenticated(adminSession, 'POST', '/api/v1/group-decision-applications', {
+      applicationDate: '2026-07-22',
+      applicationYear: 2026,
+      projectName: '集团决策集成测试项目',
+      projectCode: 'GROUP-DECISION-001',
+      projectLeaderUserId: departmentHead.id,
+      investmentEntityId: unit.id,
+      investmentDirection: 'STRATEGIC',
+      domesticOverseas: 'DOMESTIC',
+      investmentMethod: 'EQUITY',
+      majorProject: true,
+      currencyCode: 'CNY',
+      projectTotalInvestment: '2000000.00',
+      plannedInvestment: '1200000.00',
+      expectedReturnRate: '8.5000',
+      fundingCompanyOwned: '800000.00',
+      fundingGroupRequested: '400000.00',
+      annualPlannedInvestment: '1200000.00'
+    });
+    expect(groupDecisionResponse.statusCode).toBe(201);
+    const groupDecision = responseBody<{ data: { id: string } }>(groupDecisionResponse).data;
+
+    const groupSubmit = await authenticated(
+      adminSession, 'POST', `/api/v1/group-decision-applications/${groupDecision.id}/submit`, {}
+    );
+    expect(groupSubmit.statusCode).toBe(200);
+    expect(responseBody<{ data: { currentApproverUserId: string; currentStage: number } }>(groupSubmit).data)
+      .toMatchObject({ currentApproverUserId: departmentHead.id, currentStage: 1 });
+
+    const groupDepartmentApproval = await authenticated(
+      departmentSession,
+      'POST',
+      `/api/v1/group-decision-applications/${groupDecision.id}/approve`,
+      { comment: '集团决策部门审核通过' }
+    );
+    expect(groupDepartmentApproval.statusCode).toBe(200);
+    expect(responseBody<{ data: { currentApproverUserId: string; currentStage: number } }>(groupDepartmentApproval).data)
+      .toMatchObject({ currentApproverUserId: supervisingLeader.id, currentStage: 2 });
+
+    const groupFinalApproval = await authenticated(
+      supervisingSession,
+      'POST',
+      `/api/v1/group-decision-applications/${groupDecision.id}/approve`,
+      { comment: '集团决策分管领导审核通过' }
+    );
+    expect(groupFinalApproval.statusCode).toBe(200);
+    expect(responseBody<{ data: { status: string; currentStage: number; currentApproverUserId: null } }>(groupFinalApproval).data)
       .toMatchObject({ status: 'APPROVED', currentStage: 3, currentApproverUserId: null });
 
     for (let index = 0; index < 5; index += 1) {

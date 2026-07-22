@@ -62,7 +62,6 @@ async function signOut() {
         </div>
       </div>
     </header>
-
     <nav class="global-nav" aria-label="投资业务一级菜单">
       <div class="global-nav-inner">
         <RouterLink class="portal-nav-link" to="/portal">空间首页</RouterLink>

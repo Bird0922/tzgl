@@ -4,13 +4,15 @@ import cors from '@fastify/cors';
 import cookie from '@fastify/cookie';
 import multipart from '@fastify/multipart';
 import type { Pool } from 'mysql2/promise';
-import { config } from './config.js';
 import { AdminService } from './admin-service.js';
 import { registerAdminRoutes } from './admin-routes.js';
 import { AuthService } from './auth-service.js';
 import { registerAuthRoutes } from './auth-routes.js';
-import { IntentionService } from './intention-service.js';
+import { config } from './config.js';
+import { registerGroupDecisionApplicationRoutes } from './group-decision-application-routes-20260722-153405.js';
+import { GroupDecisionApplicationService } from './group-decision-application-service-20260722.js';
 import { registerIntentionRoutes } from './intention-routes.js';
+import { IntentionService } from './intention-service.js';
 import { AppError } from './types.js';
 
 export async function buildApp(pool: Pool) {
@@ -18,6 +20,7 @@ export async function buildApp(pool: Pool) {
   const auth = new AuthService(pool);
   const service = new IntentionService(pool, auth);
   const admin = new AdminService(pool, auth);
+  const groupDecisionService = new GroupDecisionApplicationService(pool, auth);
 
   await app.register(cors, {
     origin: config.webOrigin,
@@ -64,6 +67,7 @@ export async function buildApp(pool: Pool) {
   await registerAuthRoutes(app, auth);
   await registerAdminRoutes(app, auth, admin);
   await registerIntentionRoutes(app, pool, auth, service);
+  await registerGroupDecisionApplicationRoutes(app, auth, groupDecisionService);
 
   app.addHook('onClose', async () => pool.end());
   return app;

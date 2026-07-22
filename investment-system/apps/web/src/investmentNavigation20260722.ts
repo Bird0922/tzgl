@@ -97,11 +97,12 @@ export const investmentStageMenus: InvestmentStageMenu[] = [
     description: '完成投资决策申请、会议审议与结果登记。',
     items: [
       {
-        key: 'investment-decision',
-        title: '投资决策申请',
-        description: '汇总论证成果并提交投资决策。',
-        path: '/process/investment-decision',
-        status: 'planned'
+        key: 'group-decision-application',
+        title: '集团决策申请',
+        description: '发起由集团进行投资决策的项目申请。',
+        path: '/group-decisions/new',
+        status: 'available',
+        permissions: ['investment.group_decision.create']
       },
       {
         key: 'committee-review',

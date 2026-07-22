@@ -1,18 +1,41 @@
-export const IntentionStatus = {
+export const DocumentStatus = {
   PendingSend: 'PENDING_SEND',
   InReview: 'IN_REVIEW',
   Approved: 'APPROVED',
   Returned: 'RETURNED'
 } as const;
 
+export const IntentionStatus = DocumentStatus;
+
 export type IntentionStatusValue = typeof IntentionStatus[keyof typeof IntentionStatus];
 
 export type UserRole = 'initiator' | 'department_head' | 'division_leader';
 
-export interface Actor {
-  id: string;
-  name: string;
-  role: UserRole;
+export interface GroupDecisionApplicationInput {
+  version?: number;
+  applicationDate?: string | null;
+  applicationYear?: string | number | null;
+  projectName?: string | null;
+  projectCode?: string | null;
+  projectLeaderUserId?: string | null;
+  plannedStartDate?: string | null;
+  plannedEndDate?: string | null;
+  investmentEntityId?: string | null;
+  investmentDirection?: string | null;
+  domesticOverseas?: string | null;
+  investmentMethod?: string | null;
+  majorProject?: boolean | null;
+  currencyCode?: string | null;
+  projectTotalInvestment?: string | number | null;
+  plannedInvestment?: string | number | null;
+  expectedReturnRate?: string | number | null;
+  fundingCompanyOwned?: string | number | null;
+  fundingGroupRequested?: string | number | null;
+  fundingSpecialBond?: string | number | null;
+  fundingGovernment?: string | number | null;
+  fundingLoan?: string | number | null;
+  fundingOther?: string | number | null;
+  annualPlannedInvestment?: string | number | null;
 }
 
 export type EntityStatus = 'ACTIVE' | 'DISABLED';
