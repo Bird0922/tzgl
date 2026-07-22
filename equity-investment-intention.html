@@ -6,19 +6,24 @@
   <title>股权投资意向登记</title>
   <style>
     :root {
-      --primary: #0f6fcf;
-      --primary-dark: #075cad;
-      --primary-soft: #eaf4ff;
-      --success: #25a66a;
+      --brand-navy: #1f2774;
+      --brand-navy-deep: #10194f;
+      --brand-violet: #6739df;
+      --brand-blue: #2e67e8;
+      --brand-green: #90be20;
+      --primary: #315fd8;
+      --primary-dark: #244bb8;
+      --primary-soft: #edf2ff;
+      --success: #6c9917;
       --warning: #ee9f26;
       --danger: #d94b4b;
-      --text: #253247;
-      --muted: #6e7b90;
-      --line: #d9e2ec;
-      --field: #fff8df;
-      --page: #f4f7fb;
+      --text: #202a44;
+      --muted: #758097;
+      --line: #dfe3ec;
+      --field: #fffdf4;
+      --page: #f4f5f9;
       --white: #fff;
-      --shadow: 0 10px 28px rgba(32, 75, 121, 0.10);
+      --shadow: 0 16px 42px rgba(31, 39, 116, 0.10);
     }
 
     * { box-sizing: border-box; }
@@ -27,7 +32,10 @@
       margin: 0;
       min-width: 1100px;
       color: var(--text);
-      background: var(--page);
+      background:
+        radial-gradient(circle at 7% -4%, rgba(103, 57, 223, 0.12), transparent 360px),
+        radial-gradient(circle at 95% 8%, rgba(46, 103, 232, 0.10), transparent 420px),
+        var(--page);
       font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
       font-size: 14px;
     }
@@ -37,54 +45,110 @@
     button { cursor: pointer; }
 
     .app-header {
-      height: 58px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      height: 66px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 28px;
+      padding: 0 32px;
       color: #fff;
-      background: linear-gradient(90deg, #075eb6, #1382dc);
-      box-shadow: 0 2px 10px rgba(12, 89, 163, 0.22);
+      background: linear-gradient(105deg, #11194f 0%, #1f2774 44%, #172260 100%);
+      box-shadow: 0 4px 16px rgba(18, 25, 79, 0.20);
+    }
+
+    .app-header::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #6f38e8, #a44ef4 48%, #3d7bf0);
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 18px;
-      font-weight: 700;
+      height: 100%;
+      gap: 18px;
+    }
+
+    .brand-logo {
+      width: 116px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+    }
+
+    .brand-logo img {
+      display: block;
+      width: 116px;
+      height: auto;
+    }
+
+    .brand-divider {
+      width: 1px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.24);
+    }
+
+    .product-identity {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      line-height: 1;
+    }
+
+    .product-identity strong {
+      font-size: 17px;
       letter-spacing: 1px;
     }
 
-    .brand-mark {
-      width: 30px;
-      height: 30px;
-      display: grid;
-      place-items: center;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.18);
-      font-size: 16px;
+    .product-identity span {
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 11px;
+      letter-spacing: 0.5px;
     }
 
     .header-user {
       display: flex;
       align-items: center;
-      gap: 10px;
-      color: rgba(255, 255, 255, 0.92);
+      gap: 11px;
+      min-width: 178px;
+      justify-content: flex-end;
+      color: rgba(255, 255, 255, 0.94);
+    }
+
+    .user-copy {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      line-height: 1;
+    }
+
+    .user-copy strong { font-size: 14px; }
+
+    .user-copy span {
+      color: rgba(255, 255, 255, 0.58);
+      font-size: 11px;
     }
 
     .avatar {
-      width: 30px;
-      height: 30px;
+      width: 36px;
+      height: 36px;
       display: grid;
       place-items: center;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.10));
       font-weight: 700;
     }
 
     .workspace {
-      padding: 20px 24px 92px;
+      padding: 18px 24px 92px;
     }
 
     .toolbar,
@@ -97,31 +161,51 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 14px;
+      min-height: 42px;
+      margin-bottom: 12px;
     }
 
-    .breadcrumb { color: var(--muted); }
-    .breadcrumb strong { color: var(--text); font-weight: 600; }
+    .breadcrumb {
+      position: relative;
+      padding-left: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .breadcrumb::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 8px;
+      height: 8px;
+      border: 3px solid var(--brand-green);
+      border-radius: 50%;
+      transform: translateY(-50%);
+      box-shadow: 0 0 0 4px rgba(144, 190, 32, 0.12);
+    }
+
+    .breadcrumb strong { color: var(--brand-navy); font-weight: 700; }
 
     .prototype-switch {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .prototype-label { color: var(--muted); }
 
     .segmented {
       display: flex;
-      padding: 3px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
+      padding: 4px;
+      border: 1px solid #e1e4ed;
+      border-radius: 9px;
+      background: #eceff5;
     }
 
     .segmented button {
       min-width: 92px;
-      height: 30px;
+      height: 29px;
       border: 0;
       border-radius: 6px;
       color: var(--muted);
@@ -129,48 +213,99 @@
     }
 
     .segmented button.active {
-      color: #fff;
-      background: var(--primary);
-      box-shadow: 0 3px 8px rgba(15, 111, 207, 0.24);
+      color: var(--brand-navy);
+      background: #fff;
+      box-shadow: 0 3px 10px rgba(31, 39, 116, 0.12);
+      font-weight: 700;
     }
 
     .document {
       overflow: hidden;
-      border: 1px solid #dbe5ef;
-      border-radius: 12px;
+      border: 1px solid rgba(31, 39, 116, 0.10);
+      border-radius: 10px;
       background: #fff;
       box-shadow: var(--shadow);
     }
 
     .document-title {
-      min-height: 86px;
+      position: relative;
+      min-height: 104px;
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      padding: 0 34px;
+      overflow: hidden;
+      padding: 0 38px;
       color: #fff;
-      background: linear-gradient(90deg, #0867c2, #0878d9 62%, #0867c2);
+      background:
+        radial-gradient(circle at 16% 120%, rgba(147, 79, 244, 0.78), transparent 260px),
+        radial-gradient(circle at 82% -80%, rgba(63, 126, 255, 0.75), transparent 310px),
+        linear-gradient(105deg, #11194f 0%, #202b7d 48%, #172260 100%);
+    }
+
+    .document-title::before,
+    .document-title::after {
+      content: "";
+      position: absolute;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .document-title::before {
+      width: 190px;
+      height: 190px;
+      left: -68px;
+      top: -126px;
+    }
+
+    .document-title::after {
+      width: 260px;
+      height: 260px;
+      right: -92px;
+      bottom: -212px;
     }
 
     .document-title h1 {
+      position: relative;
+      z-index: 1;
       grid-column: 2;
       margin: 0;
-      font-size: 30px;
-      letter-spacing: 2px;
+      font-size: 28px;
+      letter-spacing: 3px;
+      text-shadow: 0 3px 16px rgba(4, 8, 35, 0.22);
+    }
+
+    .document-title h1::before {
+      content: "INVESTMENT INTENTION";
+      display: block;
+      margin-bottom: 8px;
+      color: rgba(255, 255, 255, 0.56);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 3.2px;
+      text-align: center;
     }
 
     .document-no {
+      position: relative;
+      z-index: 1;
       grid-column: 3;
       justify-self: end;
       display: flex;
       align-items: center;
-      gap: 12px;
-      font-size: 15px;
+      gap: 10px;
+      min-height: 42px;
+      padding: 0 15px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      backdrop-filter: blur(8px);
     }
 
     .document-no strong {
       min-width: 142px;
-      font-size: 16px;
+      font-size: 15px;
       letter-spacing: 0.5px;
     }
 
@@ -178,7 +313,9 @@
       display: grid;
       grid-template-columns: 1fr 1.55fr 0.9fr;
       gap: 30px;
-      padding: 20px 34px 8px;
+      padding: 17px 38px;
+      border-bottom: 1px solid #e8eaf1;
+      background: linear-gradient(180deg, #fbfcff, #f7f8fb);
     }
 
     .meta-item,
@@ -192,59 +329,61 @@
     .meta-item label,
     .form-item > label {
       flex: 0 0 auto;
-      color: #556275;
-      font-size: 15px;
+      color: #5b657a;
+      font-size: 14px;
       white-space: nowrap;
     }
 
     .meta-value {
       flex: 1;
-      height: 38px;
+      height: 36px;
       display: flex;
       align-items: center;
       min-width: 0;
-      padding: 0 8px;
-      border-bottom: 1px solid var(--line);
-      color: #1f2937;
-      font-size: 15px;
+      padding: 0 12px;
+      border: 1px solid #e0e3eb;
+      border-radius: 6px;
+      color: #27314a;
+      background: #fff;
+      font-size: 14px;
       font-weight: 600;
     }
 
-    .document-body { padding: 12px 34px 28px; }
+    .document-body { padding: 8px 38px 34px; }
 
-    .section { margin-top: 14px; }
+    .section { margin-top: 18px; }
 
     .section-heading {
-      height: 38px;
+      height: 42px;
       display: flex;
       align-items: center;
-      margin-bottom: 14px;
-      border-bottom: 3px solid var(--primary);
+      margin-bottom: 16px;
+      border-bottom: 1px solid #e4e7ee;
     }
 
     .section-heading h2 {
       position: relative;
-      height: 38px;
+      height: 42px;
       display: flex;
       align-items: center;
       margin: 0;
-      padding: 0 64px 0 18px;
-      color: #fff;
-      background: var(--primary);
-      font-size: 18px;
+      padding: 0 18px;
+      color: var(--brand-navy);
+      background: transparent;
+      font-size: 17px;
       font-weight: 700;
     }
 
-    .section-heading h2::after {
+    .section-heading h2::before {
       content: "";
       position: absolute;
-      top: 0;
-      right: -36px;
-      width: 72px;
-      height: 38px;
-      background: repeating-linear-gradient(62deg, #b9d8fb 0 9px, transparent 9px 16px);
-      transform: skewX(24deg);
-      transform-origin: center;
+      left: 0;
+      top: 12px;
+      width: 4px;
+      height: 18px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, var(--brand-green), #6e9d13);
+      box-shadow: 0 0 0 4px rgba(144, 190, 32, 0.10);
     }
 
     .section-note {
@@ -256,7 +395,7 @@
     .form-grid {
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
-      gap: 10px 24px;
+      gap: 14px 26px;
     }
 
     .span-3 { grid-column: span 3; }
@@ -272,8 +411,8 @@
       min-width: 0;
       height: 42px;
       padding: 0 12px;
-      border: 1px solid #eadfac;
-      border-radius: 4px;
+      border: 1px solid #e5dfbd;
+      border-radius: 6px;
       outline: 0;
       color: #263246;
       background: var(--field);
@@ -283,9 +422,9 @@
     .control::placeholder { color: #a8b1bd; }
 
     .control:focus {
-      border-color: #69a9e9;
-      background: #fffdf5;
-      box-shadow: 0 0 0 3px rgba(15, 111, 207, 0.10);
+      border-color: #7995ea;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(49, 95, 216, 0.12);
     }
 
     textarea.control {
@@ -308,8 +447,8 @@
       align-items: center;
       gap: 18px;
       padding: 0 12px;
-      border: 1px solid #eadfac;
-      border-radius: 4px;
+      border: 1px solid #e5dfbd;
+      border-radius: 6px;
       background: var(--field);
     }
 
@@ -342,9 +481,9 @@
     .readonly-control {
       display: flex;
       align-items: center;
-      color: #1a5e9f;
+      color: var(--brand-navy);
       background: var(--primary-soft);
-      border-color: #a9cff5;
+      border-color: #c8d3f5;
       font-weight: 600;
     }
 
@@ -360,8 +499,8 @@
       justify-content: space-between;
       gap: 10px;
       padding: 7px 9px 7px 12px;
-      border: 1px dashed #d7c978;
-      border-radius: 4px;
+      border: 1px dashed #d6c878;
+      border-radius: 6px;
       background: var(--field);
     }
 
@@ -371,10 +510,10 @@
       flex: 0 0 auto;
       height: 28px;
       padding: 0 12px;
-      border: 1px solid #8abcf0;
+      border: 1px solid #b7c5ee;
       border-radius: 5px;
-      color: var(--primary);
-      background: #f5faff;
+      color: var(--brand-navy);
+      background: #f3f5ff;
     }
 
     .file-input { display: none; }
@@ -392,16 +531,18 @@
       gap: 5px;
       padding: 4px 8px;
       border-radius: 5px;
-      color: #37688f;
-      background: #edf6ff;
+      color: #425292;
+      background: #eef1ff;
       font-size: 12px;
     }
 
     .workflow-card {
-      padding: 18px 20px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #f9fbfd;
+      padding: 24px 24px 20px;
+      border: 1px solid #e0e4ee;
+      border-radius: 9px;
+      background:
+        linear-gradient(90deg, rgba(103, 57, 223, 0.035), transparent 30%, rgba(46, 103, 232, 0.04)),
+        #fafbfe;
     }
 
     .workflow-route {
@@ -420,7 +561,7 @@
       display: grid;
       place-items: center;
       margin: 0 auto 8px;
-      border: 2px solid #c5d1de;
+      border: 2px solid #cfd4df;
       border-radius: 50%;
       color: #8190a2;
       background: #fff;
@@ -430,14 +571,14 @@
     .workflow-step.active .step-icon {
       border-color: var(--primary);
       color: #fff;
-      background: var(--primary);
-      box-shadow: 0 0 0 5px rgba(15, 111, 207, 0.10);
+      background: linear-gradient(145deg, #496fe1, var(--brand-navy));
+      box-shadow: 0 0 0 5px rgba(49, 95, 216, 0.10);
     }
 
     .workflow-step.done .step-icon {
       border-color: var(--success);
       color: #fff;
-      background: var(--success);
+      background: linear-gradient(145deg, var(--brand-green), var(--success));
     }
 
     .step-name { font-weight: 600; }
@@ -445,7 +586,7 @@
 
     .workflow-line {
       height: 2px;
-      background: #cfd9e4;
+      background: #d6dae4;
     }
 
     .workflow-line.done { background: var(--success); }
@@ -466,8 +607,9 @@
       height: 28px;
       padding: 0 10px;
       border-radius: 999px;
+      border: 1px solid #edda94;
       color: #8b630f;
-      background: #fff2c7;
+      background: #fff8dc;
       font-size: 13px;
       font-weight: 600;
     }
@@ -480,9 +622,9 @@
       background: currentColor;
     }
 
-    .status-chip.reviewing { color: #1669b6; background: #e8f3ff; }
-    .status-chip.approved { color: #14794c; background: #e7f7ef; }
-    .status-chip.returned { color: #a13c3c; background: #ffecec; }
+    .status-chip.reviewing { border-color: #c7d4f5; color: #3159bf; background: #edf2ff; }
+    .status-chip.approved { border-color: #cce2a0; color: #5f8612; background: #f1f8df; }
+    .status-chip.returned { border-color: #f0c5c5; color: #a13c3c; background: #fff0f0; }
 
     .action-bar {
       position: fixed;
@@ -490,15 +632,15 @@
       right: 0;
       bottom: 0;
       z-index: 20;
-      height: 72px;
+      height: 68px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 14px;
-      border-top: 1px solid #dce5ee;
+      border-top: 1px solid #e0e3eb;
       background: rgba(255, 255, 255, 0.96);
-      box-shadow: 0 -8px 26px rgba(35, 69, 103, 0.08);
-      backdrop-filter: blur(8px);
+      box-shadow: 0 -8px 28px rgba(31, 39, 116, 0.08);
+      backdrop-filter: blur(10px);
     }
 
     .action-group { display: none; gap: 14px; }
@@ -508,7 +650,7 @@
       min-width: 116px;
       height: 40px;
       padding: 0 22px;
-      border: 1px solid #bfcbd8;
+      border: 1px solid #c8cdda;
       border-radius: 6px;
       color: #3d4b5d;
       background: #fff;
@@ -524,11 +666,12 @@
     .action-button.primary {
       border-color: var(--primary);
       color: #fff;
-      background: var(--primary);
+      background: linear-gradient(100deg, var(--primary), #3977ed);
+      box-shadow: 0 5px 14px rgba(49, 95, 216, 0.22);
     }
 
     .action-button.primary:hover { background: var(--primary-dark); }
-    .action-button.success { border-color: var(--success); color: #fff; background: var(--success); }
+    .action-button.success { border-color: var(--success); color: #fff; background: linear-gradient(100deg, #82ad1c, var(--success)); }
     .action-button.danger { border-color: #efb2b2; color: var(--danger); background: #fff5f5; }
 
     .toast {
@@ -540,7 +683,7 @@
       padding: 12px 18px;
       border-radius: 7px;
       color: #fff;
-      background: rgba(29, 42, 60, 0.94);
+      background: rgba(18, 25, 79, 0.95);
       box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
       opacity: 0;
       transform: translate(-50%, -12px);
@@ -551,21 +694,49 @@
     .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
     @media (max-width: 1250px) {
-      .form-grid { gap-right: 14px; }
+      .form-grid { column-gap: 14px; }
       .document-meta { gap: 16px; }
       .document-title h1 { font-size: 27px; }
+    }
+
+    @media (max-width: 1100px) {
+      body { min-width: 0; }
+      .app-header { padding: 0 18px; }
+      .brand { gap: 12px; }
+      .workspace { padding: 14px 14px 88px; }
+      .toolbar,
+      .document { width: 100%; }
+      .toolbar { gap: 12px; }
+      .document-title { padding: 0 24px; }
+      .document-meta {
+        grid-template-columns: 1fr 1.3fr 1fr;
+        padding: 17px 24px;
+      }
+      .document-body { padding: 8px 24px 30px; }
+      .form-grid { gap: 14px 18px; }
+      .span-3 { grid-column: span 6; }
+      .span-6 { grid-column: span 12; }
     }
   </style>
 </head>
 <body>
   <header class="app-header">
     <div class="brand">
-      <span class="brand-mark">投</span>
-      <span>投资管理系统</span>
+      <span class="brand-logo">
+        <img src="https://www.seeyon.com/Public/Home/index2025/images/common/logo-1.svg" alt="致远互联" referrerpolicy="no-referrer">
+      </span>
+      <span class="brand-divider" aria-hidden="true"></span>
+      <span class="product-identity">
+        <strong>投资管理系统</strong>
+        <span>协同运营管理平台</span>
+      </span>
     </div>
     <div class="header-user">
+      <span class="user-copy">
+        <strong>综合管理员</strong>
+        <span>投资管理</span>
+      </span>
       <span class="avatar">综</span>
-      <span>综合管理员</span>
     </div>
   </header>
 

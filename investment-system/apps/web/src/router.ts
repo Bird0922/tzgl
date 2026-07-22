@@ -4,6 +4,9 @@ import SetupPage from './pages/SetupPage.vue';
 import LoginPage from './pages/LoginPage.vue';
 import ChangePasswordPage from './pages/ChangePasswordPage.vue';
 import NoAccessPage from './pages/NoAccessPage.vue';
+import InvestmentPortalHome20260722 from './pages/InvestmentPortalHome20260722.vue';
+import InvestmentProcessPlaceholder20260722 from './pages/InvestmentProcessPlaceholder20260722.vue';
+import EquityProjectApplicationPage from './pages/EquityProjectApplicationPage.vue';
 import IntentionListPage from './pages/IntentionListPage.vue';
 import IntentionFormPage from './pages/IntentionFormPage.vue';
 import UnitsPage from './pages/admin/UnitsPage.vue';
@@ -13,19 +16,11 @@ import RolesPage from './pages/admin/RolesPage.vue';
 import UsersPage from './pages/admin/UsersPage.vue';
 
 declare module 'vue-router' {
-  interface RouteMeta { public?: boolean; permission?: string; anyPermission?: string[] }
+  interface RouteMeta { public?: boolean; permission?: string; anyPermission?: string[]; stage?: string }
 }
 
 function defaultRoute() {
-  if (hasPermission('investment.intention.read') || hasPermission('investment.intention.read_all')) return '/intentions';
-  const adminRoutes: Array<[string, string]> = [
-    ['admin.unit.read', '/admin/units'],
-    ['admin.department.read', '/admin/departments'],
-    ['admin.position.read', '/admin/positions'],
-    ['admin.role.read', '/admin/roles'],
-    ['admin.user.read', '/admin/users']
-  ];
-  return adminRoutes.find(([permission]) => hasPermission(permission))?.[1] ?? '/no-access';
+  return '/portal';
 }
 
 export const router = createRouter({
@@ -36,9 +31,13 @@ export const router = createRouter({
     { path: '/change-password', component: ChangePasswordPage },
     { path: '/', component: NoAccessPage },
     { path: '/no-access', component: NoAccessPage },
-    { path: '/intentions', component: IntentionListPage, meta: { anyPermission: ['investment.intention.read', 'investment.intention.read_all'] } },
-    { path: '/intentions/new', component: IntentionFormPage, meta: { permission: 'investment.intention.create' } },
-    { path: '/intentions/:id', component: IntentionFormPage, meta: { anyPermission: ['investment.intention.read', 'investment.intention.read_all'] } },
+    { path: '/portal', component: InvestmentPortalHome20260722 },
+    { path: '/process/project-initiation', component: EquityProjectApplicationPage, meta: { stage: 'registration' } },
+    { path: '/process/group-approval', component: EquityProjectApplicationPage, props: { variant: 'groupApproval' }, meta: { stage: 'registration' } },
+    { path: '/process/:processKey', component: InvestmentProcessPlaceholder20260722 },
+    { path: '/intentions', component: IntentionListPage, meta: { stage: 'registration', anyPermission: ['investment.intention.read', 'investment.intention.read_all'] } },
+    { path: '/intentions/new', component: IntentionFormPage, meta: { stage: 'registration', permission: 'investment.intention.create' } },
+    { path: '/intentions/:id', component: IntentionFormPage, meta: { stage: 'registration', anyPermission: ['investment.intention.read', 'investment.intention.read_all'] } },
     { path: '/admin/units', component: UnitsPage, meta: { permission: 'admin.unit.read' } },
     { path: '/admin/departments', component: DepartmentsPage, meta: { permission: 'admin.department.read' } },
     { path: '/admin/positions', component: PositionsPage, meta: { permission: 'admin.position.read' } },
@@ -53,7 +52,7 @@ router.beforeEach(async to => {
   if (to.path === '/setup') return '/login';
   if (!authState.ready) await loadSession();
   if (!authState.user) return to.path === '/login' ? true : '/login';
-  if (to.path === '/login') return '/intentions';
+  if (to.path === '/login') return '/portal';
   if (authState.user.mustChangePassword && to.path !== '/change-password') return '/change-password';
   if (!authState.user.mustChangePassword && to.path === '/change-password') return defaultRoute();
   if (to.path === '/') return defaultRoute();

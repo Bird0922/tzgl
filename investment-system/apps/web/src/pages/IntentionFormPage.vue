@@ -129,7 +129,8 @@ onMounted(load);
       <div class="meta-item"><label>投资主体</label><select v-model="form.investmentEntityId" :disabled="!editable"><option value="">请选择</option><option v-if="detail?.investmentEntityId && !units.some(unit => unit.id === detail?.investmentEntityId)" :value="detail.investmentEntityId">{{ detail.investmentEntityName }}</option><option v-for="unit in units" :key="unit.id" :value="unit.id">{{ unit.name }}</option></select></div>
       <div class="meta-item"><label>申请日期</label><input v-model="form.applicationDate" type="date" :disabled="!editable"></div>
     </div>
-    <form class="document-body" @submit.prevent>
+    <form class="document-body approval-side-layout" @submit.prevent>
+      <div class="document-main-column">
       <section class="section">
         <div class="section-heading"><h2>基础信息</h2><span>未标注字段可留空</span></div>
         <div class="form-grid">
@@ -165,7 +166,9 @@ onMounted(load);
           <label class="field span-3"><span>预计收益率</span><div class="unit-input"><input v-model="form.expectedReturnRate" type="number" step="0.0001" :disabled="!editable"><em>%</em></div></label>
         </div>
       </section>
-      <section class="section">
+      </div>
+      <aside class="document-approval-column" aria-label="审批信息">
+      <section class="section approval-section">
         <div class="section-heading"><h2>审批信息</h2></div>
         <div class="workflow-card">
           <div class="workflow-route"><template v-for="(step, index) in ['业务发起人', '部门负责人', '分管领导']" :key="step"><div class="workflow-step" :class="{ done: (detail?.currentStage ?? 0) > index, active: (detail?.currentStage ?? 0) === index && (detail?.currentStage ?? 0) < 3 }"><div class="step-icon">{{ index + 1 }}</div><strong>{{ step }}</strong></div><div v-if="index < 2" class="workflow-line" :class="{ done: (detail?.currentStage ?? 0) > index }"></div></template></div>
@@ -173,6 +176,7 @@ onMounted(load);
           <div v-if="detail?.history?.length" class="history"><h3>流转记录</h3><table><thead><tr><th>操作</th><th>办理人</th><th>意见</th><th>时间</th></tr></thead><tbody><tr v-for="item in detail.history" :key="item.id"><td>{{ { SUBMIT: '发送', APPROVE: '同意', RETURN: '退回' }[item.action] }}</td><td>{{ item.operatorName }}</td><td>{{ item.comment || '—' }}</td><td>{{ item.createdAt }}</td></tr></tbody></table></div>
         </div>
       </section>
+      </aside>
     </form>
   </article>
   <div class="inline-action-bar">
