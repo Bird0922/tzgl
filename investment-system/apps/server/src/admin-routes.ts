@@ -258,19 +258,30 @@ export async function registerAdminRoutes(app: FastifyInstance, auth: AuthServic
 
   app.get('/api/v1/directory/units', async request => {
     const context = await auth.authenticate(request);
-    auth.requireAnyPermission(context, ['investment.intention.create', 'investment.intention.update', 'admin.unit.read']);
+    auth.requireAnyPermission(context, [
+      'investment.intention.create', 'investment.intention.update',
+      'investment.group_decision.create', 'investment.group_decision.update',
+      'admin.unit.read'
+    ]);
     return { success: true, data: await admin.directoryUnits() };
   });
   app.get('/api/v1/directory/users', async request => {
     const context = await auth.authenticate(request);
     auth.requireAnyPermission(context, [
-      'investment.intention.create', 'investment.intention.update', 'admin.user.read', 'admin.department.manage'
+      'investment.intention.create', 'investment.intention.update',
+      'investment.group_decision.create', 'investment.group_decision.update',
+      'admin.user.read', 'admin.department.manage'
     ]);
     const query = queryObject(request);
     return { success: true, data: await admin.directoryUsers({
       unitId: query.unitId ? requiredId(query.unitId, '单位ID') : undefined,
       departmentId: query.departmentId ? requiredId(query.departmentId, '部门ID') : undefined,
-      permission: optionalText(query.permission, '权限编码', 128, /^[a-z.]+(?:_[a-z]+)?$/) ?? undefined
+      permission: optionalText(
+        query.permission,
+        '权限编码',
+        128,
+        /^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$/
+      ) ?? undefined
     }) };
   });
 }

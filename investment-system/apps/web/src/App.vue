@@ -8,6 +8,7 @@ const router = useRouter();
 const publicPage = computed(() => Boolean(route.meta.public));
 const showAdmin = computed(() => hasPermission('admin.access'));
 const showInvestment = computed(() => hasPermission('investment.intention.read') || hasPermission('investment.intention.read_all'));
+const showGroupDecision = computed(() => hasPermission('investment.group_decision.read') || hasPermission('investment.group_decision.read_all'));
 
 async function signOut() {
   await logout();
@@ -34,6 +35,10 @@ async function signOut() {
         <template v-if="showInvestment">
           <div class="menu-title">投资管理</div>
           <RouterLink to="/intentions">投资意向</RouterLink>
+        </template>
+        <template v-if="showGroupDecision">
+          <div class="menu-title">投资决策</div>
+          <RouterLink to="/group-decisions/new">集团决策申请</RouterLink>
         </template>
         <template v-if="showAdmin">
           <div class="menu-title">后台管理</div>

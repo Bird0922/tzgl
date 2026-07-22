@@ -6,6 +6,7 @@ import ChangePasswordPage from './pages/ChangePasswordPage.vue';
 import NoAccessPage from './pages/NoAccessPage.vue';
 import IntentionListPage from './pages/IntentionListPage.vue';
 import IntentionFormPage from './pages/IntentionFormPage.vue';
+import GroupDecisionApplicationPage from './GroupDecisionApplication20260722_125218.vue';
 import UnitsPage from './pages/admin/UnitsPage.vue';
 import DepartmentsPage from './pages/admin/DepartmentsPage.vue';
 import PositionsPage from './pages/admin/PositionsPage.vue';
@@ -18,6 +19,7 @@ declare module 'vue-router' {
 
 function defaultRoute() {
   if (hasPermission('investment.intention.read') || hasPermission('investment.intention.read_all')) return '/intentions';
+  if (hasPermission('investment.group_decision.read') || hasPermission('investment.group_decision.read_all')) return '/group-decisions/new';
   const adminRoutes: Array<[string, string]> = [
     ['admin.unit.read', '/admin/units'],
     ['admin.department.read', '/admin/departments'],
@@ -39,6 +41,8 @@ export const router = createRouter({
     { path: '/intentions', component: IntentionListPage, meta: { anyPermission: ['investment.intention.read', 'investment.intention.read_all'] } },
     { path: '/intentions/new', component: IntentionFormPage, meta: { permission: 'investment.intention.create' } },
     { path: '/intentions/:id', component: IntentionFormPage, meta: { anyPermission: ['investment.intention.read', 'investment.intention.read_all'] } },
+    { path: '/group-decisions/new', component: GroupDecisionApplicationPage, meta: { permission: 'investment.group_decision.create' } },
+    { path: '/group-decisions/:id', component: GroupDecisionApplicationPage, meta: { anyPermission: ['investment.group_decision.read', 'investment.group_decision.read_all'] } },
     { path: '/admin/units', component: UnitsPage, meta: { permission: 'admin.unit.read' } },
     { path: '/admin/departments', component: DepartmentsPage, meta: { permission: 'admin.department.read' } },
     { path: '/admin/positions', component: PositionsPage, meta: { permission: 'admin.position.read' } },
@@ -53,7 +57,7 @@ router.beforeEach(async to => {
   if (to.path === '/setup') return '/login';
   if (!authState.ready) await loadSession();
   if (!authState.user) return to.path === '/login' ? true : '/login';
-  if (to.path === '/login') return '/intentions';
+  if (to.path === '/login') return defaultRoute();
   if (authState.user.mustChangePassword && to.path !== '/change-password') return '/change-password';
   if (!authState.user.mustChangePassword && to.path === '/change-password') return defaultRoute();
   if (to.path === '/') return defaultRoute();
