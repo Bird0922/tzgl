@@ -2,4 +2,4 @@ import { createApp } from 'vue';
 import EquityProjectApplicationPage from './pages/EquityProjectApplicationPage.vue';
 import './styles.css';
 
-createApp(EquityProjectApplicationPage).mount('#app');
+createApp(EquityProjectApplicationPage, { standalone: true }).mount('#app');

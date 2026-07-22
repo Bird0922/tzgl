@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 
+withDefaults(defineProps<{ standalone?: boolean }>(), {
+  standalone: false
+});
+
 type YesNo = '' | 'yes' | 'no';
 type AttachmentGroup = 'applicationMaterials' | 'researchReports';
 
@@ -222,14 +226,13 @@ function clearMembers() {
 </script>
 
 <template>
-  <div class="project-application-shell">
-    <header class="app-header project-app-header">
+  <div class="project-application-shell" :class="{ 'is-standalone': standalone }">
+    <header v-if="standalone" class="app-header project-app-header">
       <div class="brand">
         <span class="brand-logo">
           <img
-            src="https://www.seeyon.com/Public/Home/index2025/images/common/logo-1.svg"
+            src="/assets/seeyon_official_logo_white_20260722_c7a1.svg"
             alt="致远互联"
-            referrerpolicy="no-referrer"
           >
         </span>
         <span class="brand-divider" aria-hidden="true"></span>
@@ -411,7 +414,7 @@ function clearMembers() {
 }
 
 .project-application-shell {
-  min-height: 100vh;
+  min-height: 100%;
   --brand-navy: #1f2774;
   --brand-navy-deep: #10194f;
   --brand-green: #90be20;
@@ -421,6 +424,8 @@ function clearMembers() {
   --field: #fffdf4;
   --muted: #758097;
 }
+
+.project-application-shell.is-standalone { min-height: 100vh; }
 
 .project-app-header {
   position: sticky;
