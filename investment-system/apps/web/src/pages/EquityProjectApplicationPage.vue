@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 
-withDefaults(defineProps<{ standalone?: boolean }>(), {
-  standalone: false
+const props = withDefaults(defineProps<{
+  standalone?: boolean;
+  variant?: 'projectApplication' | 'groupApproval';
+}>(), {
+  standalone: false,
+  variant: 'projectApplication'
 });
 
 type YesNo = '' | 'yes' | 'no';
-type AttachmentGroup = 'applicationMaterials' | 'researchReports';
+type AttachmentGroup = 'applicationMaterials' | 'researchReports' | 'decisionFiles';
 
 interface ProjectMember {
   id: number;
@@ -39,6 +43,8 @@ const form = reactive({
   applicationDate: localDate(),
   applicationUnit: '远望实业集团有限公司',
   receivingUnit: '远望实业集团有限公司',
+  applicationDepartment: '协同云体验',
+  approvalFiling: '审批',
   independentDecision: '' as YesNo,
   projectName: '',
   projectCode: '',
@@ -103,12 +109,16 @@ const members = ref<ProjectMember[]>([createMember()]);
 const selectedMemberId = ref<number | null>(members.value[0].id);
 const applicationMaterials = ref<File[]>([]);
 const researchReports = ref<File[]>([]);
+const decisionFiles = ref<File[]>([]);
 const toast = ref('');
 const toastTone = ref<'normal' | 'error' | 'success'>('normal');
 let toastTimer: number | undefined;
 
 const totalFunding = computed(() => Object.values(fundingSources)
   .reduce((total, value) => total + (Number(value) || 0), 0));
+const isGroupApproval = computed(() => props.variant === 'groupApproval');
+const pageTitle = computed(() => isGroupApproval.value ? '股权投资立项集团审批申请' : '股权投资立项申报');
+const pageKicker = computed(() => isGroupApproval.value ? 'GROUP APPROVAL APPLICATION' : 'PROJECT INITIATION APPLICATION');
 
 const formattedTotalFunding = computed(() => new Intl.NumberFormat('zh-CN', {
   minimumFractionDigits: 2,
@@ -134,6 +144,17 @@ function validateDates(): boolean {
 
 function validateForSubmit(): boolean {
   if (!validateDates()) return false;
+  if (isGroupApproval.value) {
+    if (!form.projectName) {
+      notify('请选择需要提交集团审批的立项项目', 'error');
+      return false;
+    }
+    if (!decisionFiles.value.length) {
+      notify('请上传集团审批所需的决议文件', 'error');
+      return false;
+    }
+    return true;
+  }
   if (totalFunding.value <= 0) {
     notify('投资资金来源不能全为 0，请正确填写资金来源', 'error');
     return false;
@@ -143,16 +164,71 @@ function validateForSubmit(): boolean {
 
 function saveDraft() {
   if (!validateDates()) return;
-  notify('页面数据校验通过；后端接入后可保存待发', 'success');
+  notify(isGroupApproval.value
+    ? '集团审批申请校验通过；后端接入后可保存待发'
+    : '页面数据校验通过；后端接入后可保存待发', 'success');
 }
 
 function submitApplication() {
   if (!validateForSubmit()) return;
-  notify('表单校验通过；审批提交将在后端流程接入后启用', 'success');
+  notify(isGroupApproval.value
+    ? '集团审批申请校验通过；流程提交将在后端接入后启用'
+    : '表单校验通过；审批提交将在后端流程接入后启用', 'success');
 }
 
 function attachmentFiles(group: AttachmentGroup) {
-  return group === 'applicationMaterials' ? applicationMaterials : researchReports;
+  if (group === 'applicationMaterials') return applicationMaterials;
+  if (group === 'researchReports') return researchReports;
+  return decisionFiles;
+}
+
+function applyProjectSelection() {
+  if (!form.projectName) return;
+  Object.assign(form, {
+    projectCode: 'LX-2026-001',
+    majorProject: 'yes',
+    investmentEntity: '远望实业集团有限公司',
+    projectLeader: '投资经理',
+    contactPhone: '028-88886666',
+    plannedStartDate: '2026-08-01',
+    plannedEndDate: '2027-12-31',
+    investmentType: 'acquisition',
+    hasPartners: 'yes',
+    projectLocation: '四川省成都市',
+    investmentTarget: '远望新能源科技有限公司',
+    mainBusiness: '新能源技术研发、设备制造与运营服务',
+    investmentDirection: 'industrial',
+    domesticOverseas: 'DOMESTIC',
+    currencyCode: 'CNY',
+    exchangeRate: '1.0000',
+    plannedShareholdingRatio: '35.00',
+    projectTotalInvestment: '25000000.00',
+    expectedReturnRate: '8.50',
+    projectOverview: '围绕集团新能源产业布局，通过股权投资完善产业链协同能力。',
+    mainContent: '收购目标公司部分股权，完成治理结构优化及业务资源整合。',
+    fundAndCostPlan: '项目计划投资 2500 万元，按照审批进度分阶段实施。',
+    expectedReturns: '预计项目稳定运营后形成持续投资收益并提升产业协同效益。',
+    promotionPlan: '完成集团审批后开展协议谈判、交割准备和工商变更。',
+    riskControlMeasures: '通过估值复核、业绩承诺、分期交割和投后治理控制投资风险。'
+  });
+  Object.assign(fundingSources, {
+    companyOwnFunds: '5000000',
+    groupFunds: '20000000',
+    specialBonds: '',
+    governmentFunds: '',
+    loans: '',
+    otherFunds: ''
+  });
+  members.value = [{
+    id: memberSequence++,
+    name: '李明',
+    department: '投资管理部',
+    position: '投资经理',
+    contact: '028-88886666',
+    projectRole: '项目负责人',
+    taskAssignment: '统筹集团审批材料、协议谈判及项目交割'
+  }];
+  selectedMemberId.value = members.value[0].id;
 }
 
 function onAttachmentChange(group: AttachmentGroup, event: Event) {
@@ -226,8 +302,8 @@ function clearMembers() {
 </script>
 
 <template>
-  <div class="project-application-shell" :class="{ 'is-standalone': standalone }">
-    <header v-if="standalone" class="app-header project-app-header">
+  <div class="project-application-shell" :class="{ 'is-standalone': props.standalone, 'is-group-approval': isGroupApproval }">
+    <header v-if="props.standalone" class="app-header project-app-header">
       <div class="brand">
         <span class="brand-logo">
           <img
@@ -249,21 +325,21 @@ function clearMembers() {
 
     <main class="workspace">
       <div class="toolbar">
-        <div class="breadcrumb">投资前期 / 登记立项 / <strong>股权投资立项申报</strong></div>
+        <div class="breadcrumb">投资前期 / 登记立项 / <strong>{{ pageTitle }}</strong></div>
         <span class="status-chip">待发</span>
       </div>
 
       <article class="document project-application-document">
         <header class="document-title project-application-title">
           <div class="title-copy">
-            <span>PROJECT INITIATION APPLICATION</span>
-            <h1>股权投资立项申报</h1>
+            <span>{{ pageKicker }}</span>
+            <h1>{{ pageTitle }}</h1>
           </div>
           <div class="document-no"><span>No</span><strong>保存后生成</strong></div>
         </header>
 
         <form class="document-body" @submit.prevent>
-          <section class="application-meta-card" aria-labelledby="application-meta-title">
+          <section v-if="!isGroupApproval" class="application-meta-card" aria-labelledby="application-meta-title">
             <h2 id="application-meta-title" class="sr-only">申报信息</h2>
             <div class="form-grid meta-form-grid">
               <label class="field span-3"><span>申报人</span><input :value="form.applicantName" disabled></label>
@@ -290,78 +366,111 @@ function clearMembers() {
             <p class="funding-warning" role="note">注意：【投资资金来源】不能全为 0，请按资金来源正确填写。</p>
           </section>
 
+          <section v-else class="application-meta-card" aria-labelledby="group-approval-meta-title">
+            <h2 id="group-approval-meta-title" class="sr-only">集团审批申请信息</h2>
+            <div class="form-grid meta-form-grid">
+              <label class="field span-3"><span>申请人</span><input :value="form.applicantName" disabled></label>
+              <label class="field span-6"><span>申请单位</span><input :value="form.applicationUnit" disabled></label>
+              <label class="field span-3"><span>申请日期</span><input v-model="form.applicationDate" type="date"></label>
+              <label class="field span-3"><span>申请年度</span><div class="unit-input"><input v-model="form.applicationYear" type="number" min="2000" max="2100"><em>年</em></div></label>
+              <label class="field span-3"><span>申请部门</span><input :value="form.applicationDepartment" disabled></label>
+              <label class="field span-3"><span>投资方式</span><input :value="form.investmentMethod" disabled></label>
+              <div class="field span-3"><span>审批备案</span><div class="readonly-chip">{{ form.approvalFiling }}</div></div>
+              <div class="field span-12 upload-field">
+                <span>决议文件</span>
+                <div class="upload-area">
+                  <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg" @change="onAttachmentChange('decisionFiles', $event)">
+                  <small>最多 10 个，单个不超过 20 MB</small>
+                </div>
+              </div>
+              <div v-if="decisionFiles.length" class="attachment-list span-12">
+                <span v-for="(file, index) in decisionFiles" :key="`${file.name}-${file.lastModified}`" class="file-chip">
+                  {{ file.name }}
+                  <button type="button" :aria-label="`移除决议文件 ${file.name}`" @click="removeAttachment('decisionFiles', index)">×</button>
+                </span>
+              </div>
+            </div>
+          </section>
+
           <section class="section">
-            <div class="section-heading"><h2>项目信息</h2><span>立项申报核心信息</span></div>
+            <div class="section-heading"><h2>{{ isGroupApproval ? '项目详情' : '项目信息' }}</h2><span>{{ isGroupApproval ? '来源于已提交的立项申报' : '立项申报核心信息' }}</span></div>
             <div class="form-grid">
-              <label class="field span-6"><span>项目名称</span><input v-model.trim="form.projectName" maxlength="300" placeholder="请输入项目名称"></label>
+              <label class="field span-6">
+                <span>项目名称</span>
+                <select v-if="isGroupApproval" v-model="form.projectName" @change="applyProjectSelection">
+                  <option value="">请选择已提交的立项申报</option>
+                  <option value="远望新能源产业并购项目">远望新能源产业并购项目</option>
+                </select>
+                <input v-else v-model.trim="form.projectName" maxlength="300" placeholder="请输入项目名称">
+              </label>
               <label class="field span-3"><span>项目编码</span><input :value="form.projectCode || '保存后生成'" disabled></label>
-              <div class="field span-3"><span>重大项目</span><div class="radio-box"><label><input v-model="form.majorProject" type="radio" value="yes"> 是</label><label><input v-model="form.majorProject" type="radio" value="no"> 否</label></div></div>
+              <div class="field span-3"><span>重大项目</span><div class="radio-box"><label><input v-model="form.majorProject" type="radio" value="yes" :disabled="isGroupApproval"> 是</label><label><input v-model="form.majorProject" type="radio" value="no" :disabled="isGroupApproval"> 否</label></div></div>
 
-              <label class="field span-6"><span>投资主体</span><select v-model="form.investmentEntity"><option value="">请选择投资主体</option><option>远望实业集团有限公司</option><option>远望产业投资有限公司</option></select></label>
-              <label class="field span-3"><span>项目负责人</span><select v-model="form.projectLeader"><option value="">请选择</option><option>综合管理员</option><option>投资经理</option><option>投资部门负责人</option></select></label>
-              <label class="field span-3"><span>联系电话</span><input v-model.trim="form.contactPhone" maxlength="50" inputmode="tel" placeholder="请输入联系电话"></label>
+              <label class="field span-6"><span>投资主体</span><select v-model="form.investmentEntity" :disabled="isGroupApproval"><option value="">请选择投资主体</option><option>远望实业集团有限公司</option><option>远望产业投资有限公司</option></select></label>
+              <label class="field span-3"><span>项目负责人</span><select v-model="form.projectLeader" :disabled="isGroupApproval"><option value="">请选择</option><option>综合管理员</option><option>投资经理</option><option>投资部门负责人</option></select></label>
+              <label class="field span-3"><span>联系电话</span><input v-model.trim="form.contactPhone" maxlength="50" inputmode="tel" placeholder="请输入联系电话" :disabled="isGroupApproval"></label>
 
-              <label class="field span-3"><span>计划开始</span><input v-model="form.plannedStartDate" type="date"></label>
-              <label class="field span-3"><span>计划结束</span><input v-model="form.plannedEndDate" type="date"></label>
-              <label class="field span-3"><span>投资类型</span><select v-model="form.investmentType"><option value="">请选择</option><option value="new">新设投资</option><option value="increase">增资扩股</option><option value="acquisition">股权收购</option><option value="other">其他股权投资</option></select></label>
-              <div class="field span-3"><span>有无合作方</span><div class="radio-box"><label><input v-model="form.hasPartners" type="radio" value="yes"> 有</label><label><input v-model="form.hasPartners" type="radio" value="no"> 无</label></div></div>
+              <label class="field span-3"><span>计划开始</span><input v-model="form.plannedStartDate" type="date" :disabled="isGroupApproval"></label>
+              <label class="field span-3"><span>计划结束</span><input v-model="form.plannedEndDate" type="date" :disabled="isGroupApproval"></label>
+              <label class="field span-3"><span>投资类型</span><select v-model="form.investmentType" :disabled="isGroupApproval"><option value="">请选择</option><option value="new">新设投资</option><option value="increase">增资扩股</option><option value="acquisition">股权收购</option><option value="other">其他股权投资</option></select></label>
+              <div class="field span-3"><span>有无合作方</span><div class="radio-box"><label><input v-model="form.hasPartners" type="radio" value="yes" :disabled="isGroupApproval"> 有</label><label><input v-model="form.hasPartners" type="radio" value="no" :disabled="isGroupApproval"> 无</label></div></div>
 
-              <label class="field span-6"><span>项目地点</span><input v-model.trim="form.projectLocation" maxlength="500" placeholder="请输入项目地点"></label>
-              <div class="field span-6 upload-field">
+              <label class="field span-6"><span>项目地点</span><input v-model.trim="form.projectLocation" maxlength="500" placeholder="请输入项目地点" :disabled="isGroupApproval"></label>
+              <div v-if="!isGroupApproval" class="field span-6 upload-field">
                 <span>调研报告</span>
                 <div class="upload-area">
                   <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg" @change="onAttachmentChange('researchReports', $event)">
                   <small>最多 10 个，单个不超过 20 MB</small>
                 </div>
               </div>
-              <div v-if="researchReports.length" class="attachment-list span-12">
+              <div v-if="!isGroupApproval && researchReports.length" class="attachment-list span-12">
                 <span v-for="(file, index) in researchReports" :key="`${file.name}-${file.lastModified}`" class="file-chip">
                   {{ file.name }}
                   <button type="button" :aria-label="`移除调研报告 ${file.name}`" @click="removeAttachment('researchReports', index)">×</button>
                 </span>
               </div>
 
-              <label class="field span-6"><span>投资对象</span><input v-model.trim="form.investmentTarget" maxlength="300" placeholder="请输入投资对象"></label>
-              <label class="field span-6"><span>主营业务</span><input v-model.trim="form.mainBusiness" maxlength="1000" placeholder="请输入投资对象的主营业务"></label>
+              <label class="field span-6"><span>投资对象</span><input v-model.trim="form.investmentTarget" maxlength="300" placeholder="请输入投资对象" :disabled="isGroupApproval"></label>
+              <label class="field span-6"><span>主营业务</span><input v-model.trim="form.mainBusiness" maxlength="1000" placeholder="请输入投资对象的主营业务" :disabled="isGroupApproval"></label>
 
-              <label class="field span-3"><span>投资方向</span><select v-model="form.investmentDirection"><option value="">请选择</option><option value="strategic">战略性投资</option><option value="financial">财务性投资</option><option value="industrial">产业协同投资</option></select></label>
-              <label class="field span-3"><span>境内外</span><select v-model="form.domesticOverseas"><option value="">请选择</option><option value="DOMESTIC">境内</option><option value="OVERSEAS">境外</option></select></label>
-              <label class="field span-3"><span>投资币种</span><select v-model="form.currencyCode"><option value="CNY">人民币（CNY）</option><option value="USD">美元（USD）</option><option value="EUR">欧元（EUR）</option><option value="HKD">港币（HKD）</option></select></label>
-              <label class="field span-3"><span>投资汇率</span><input v-model="form.exchangeRate" type="number" min="0.000001" step="0.000001"></label>
+              <label class="field span-3"><span>投资方向</span><select v-model="form.investmentDirection" :disabled="isGroupApproval"><option value="">请选择</option><option value="strategic">战略性投资</option><option value="financial">财务性投资</option><option value="industrial">产业协同投资</option></select></label>
+              <label class="field span-3"><span>境内外</span><select v-model="form.domesticOverseas" :disabled="isGroupApproval"><option value="">请选择</option><option value="DOMESTIC">境内</option><option value="OVERSEAS">境外</option></select></label>
+              <label class="field span-3"><span>投资币种</span><select v-model="form.currencyCode" :disabled="isGroupApproval"><option value="CNY">人民币（CNY）</option><option value="USD">美元（USD）</option><option value="EUR">欧元（EUR）</option><option value="HKD">港币（HKD）</option></select></label>
+              <label class="field span-3"><span>投资汇率</span><input v-model="form.exchangeRate" type="number" min="0.000001" step="0.000001" :disabled="isGroupApproval"></label>
 
-              <label class="field span-3"><span>计划占股比</span><div class="unit-input"><input v-model="form.plannedShareholdingRatio" type="number" min="0" max="100" step="0.01"><em>%</em></div></label>
-              <label class="field span-3"><span>项目总投资</span><div class="unit-input"><input v-model="form.projectTotalInvestment" type="number" min="0" step="0.01"><em>元</em></div></label>
+              <label class="field span-3"><span>计划占股比</span><div class="unit-input"><input v-model="form.plannedShareholdingRatio" type="number" min="0" max="100" step="0.01" :disabled="isGroupApproval"><em>%</em></div></label>
+              <label class="field span-3"><span>项目总投资</span><div class="unit-input"><input v-model="form.projectTotalInvestment" type="number" min="0" step="0.01" :disabled="isGroupApproval"><em>元</em></div></label>
               <div class="field span-3"><span>计划投资额</span><div class="readonly-amount" aria-live="polite">{{ formattedTotalFunding }} 元</div></div>
-              <label class="field span-3"><span>预计收益率</span><div class="unit-input"><input v-model="form.expectedReturnRate" type="number" step="0.01"><em>%</em></div></label>
+              <label class="field span-3"><span>预计收益率</span><div class="unit-input"><input v-model="form.expectedReturnRate" type="number" step="0.01" :disabled="isGroupApproval"><em>%</em></div></label>
             </div>
           </section>
 
           <section class="section">
             <div class="section-heading"><h2>项目描述</h2><span>说明投资必要性、收益与风险</span></div>
             <div class="description-grid">
-              <label class="description-field"><span>项目概述</span><textarea v-model.trim="form.projectOverview" maxlength="4000" placeholder="项目背景和投资的必要性"></textarea></label>
-              <label class="description-field"><span>主要内容</span><textarea v-model.trim="form.mainContent" maxlength="4000" placeholder="项目的主要内容及其说明"></textarea></label>
-              <label class="description-field"><span>所需资金及费用计划</span><textarea v-model.trim="form.fundAndCostPlan" maxlength="4000" placeholder="说明资金需求、费用构成及使用计划"></textarea></label>
-              <label class="description-field"><span>预期收益</span><textarea v-model.trim="form.expectedReturns" maxlength="4000" placeholder="新增产能、销售收入、利润、投资收益率等"></textarea></label>
-              <label class="description-field"><span>推进计划</span><textarea v-model.trim="form.promotionPlan" maxlength="4000" placeholder="说明项目推进阶段、关键节点及计划安排"></textarea></label>
-              <label class="description-field"><span>投资风险及防控措施</span><textarea v-model.trim="form.riskControlMeasures" maxlength="4000" placeholder="说明主要风险、应对策略及防控措施"></textarea></label>
+              <label class="description-field"><span>项目概述</span><textarea v-model.trim="form.projectOverview" maxlength="4000" placeholder="项目背景和投资的必要性" :disabled="isGroupApproval"></textarea></label>
+              <label class="description-field"><span>主要内容</span><textarea v-model.trim="form.mainContent" maxlength="4000" placeholder="项目的主要内容及其说明" :disabled="isGroupApproval"></textarea></label>
+              <label class="description-field"><span>所需资金及费用计划</span><textarea v-model.trim="form.fundAndCostPlan" maxlength="4000" placeholder="说明资金需求、费用构成及使用计划" :disabled="isGroupApproval"></textarea></label>
+              <label class="description-field"><span>预期收益</span><textarea v-model.trim="form.expectedReturns" maxlength="4000" placeholder="新增产能、销售收入、利润、投资收益率等" :disabled="isGroupApproval"></textarea></label>
+              <label class="description-field"><span>推进计划</span><textarea v-model.trim="form.promotionPlan" maxlength="4000" placeholder="说明项目推进阶段、关键节点及计划安排" :disabled="isGroupApproval"></textarea></label>
+              <label class="description-field"><span>投资风险及防控措施</span><textarea v-model.trim="form.riskControlMeasures" maxlength="4000" placeholder="说明主要风险、应对策略及防控措施" :disabled="isGroupApproval"></textarea></label>
             </div>
           </section>
 
           <section class="section">
-            <div class="section-heading"><h2>资金来源</h2><span>合计将自动计入计划投资额</span></div>
+            <div class="section-heading"><h2>{{ isGroupApproval ? '资源来源' : '资金来源' }}</h2><span>{{ isGroupApproval ? '来源于立项申报资金方案' : '合计将自动计入计划投资额' }}</span></div>
             <div class="funding-grid">
               <label v-for="field in fundingFields" :key="field.key" class="funding-field">
                 <span>{{ field.label }}</span>
-                <div class="unit-input"><input v-model="fundingSources[field.key]" type="number" min="0" step="0.01"><em>元</em></div>
+                <div class="unit-input"><input v-model="fundingSources[field.key]" type="number" min="0" step="0.01" :disabled="isGroupApproval"><em>元</em></div>
               </label>
             </div>
             <div class="funding-total"><span>资金来源合计</span><strong>{{ formattedTotalFunding }} 元</strong></div>
           </section>
 
           <section class="section member-section">
-            <div class="section-heading"><h2>项目组员</h2><span>点击行后可复制或删除</span></div>
-            <div class="member-toolbar" role="toolbar" aria-label="项目组员操作">
+            <div class="section-heading"><h2>项目组员</h2><span>{{ isGroupApproval ? '来源于立项申报项目组织' : '点击行后可复制或删除' }}</span></div>
+            <div v-if="!isGroupApproval" class="member-toolbar" role="toolbar" aria-label="项目组员操作">
               <button type="button" class="primary" @click="addMember">＋ 新建</button>
               <button type="button" @click="copySelectedMember">复制</button>
               <button type="button" @click="removeSelectedMember">删除</button>
@@ -370,7 +479,7 @@ function clearMembers() {
             </div>
             <div class="member-table-wrap">
               <table class="member-table">
-                <thead><tr><th>序号</th><th>姓名</th><th>部门</th><th>职位</th><th>联系方式</th><th>项目角色</th><th>任务分工</th></tr></thead>
+                <thead><tr><th>序号</th><th>姓名</th><th v-if="!isGroupApproval">部门</th><th>职位</th><th>联系方式</th><th>项目角色</th><th>任务分工</th></tr></thead>
                 <tbody>
                   <tr
                     v-for="(member, index) in members"
@@ -380,12 +489,12 @@ function clearMembers() {
                     @focusin="selectedMemberId = member.id"
                   >
                     <td>{{ index + 1 }}</td>
-                    <td><input v-model.trim="member.name" maxlength="100" :aria-label="`第 ${index + 1} 行姓名`"></td>
-                    <td><input v-model.trim="member.department" maxlength="200" :aria-label="`第 ${index + 1} 行部门`"></td>
-                    <td><input v-model.trim="member.position" maxlength="100" :aria-label="`第 ${index + 1} 行职位`"></td>
-                    <td><input v-model.trim="member.contact" maxlength="100" :aria-label="`第 ${index + 1} 行联系方式`"></td>
-                    <td><input v-model.trim="member.projectRole" maxlength="100" :aria-label="`第 ${index + 1} 行项目角色`"></td>
-                    <td><input v-model.trim="member.taskAssignment" maxlength="1000" :aria-label="`第 ${index + 1} 行任务分工`"></td>
+                    <td><input v-model.trim="member.name" maxlength="100" :aria-label="`第 ${index + 1} 行姓名`" :disabled="isGroupApproval"></td>
+                    <td v-if="!isGroupApproval"><input v-model.trim="member.department" maxlength="200" :aria-label="`第 ${index + 1} 行部门`"></td>
+                    <td><input v-model.trim="member.position" maxlength="100" :aria-label="`第 ${index + 1} 行职位`" :disabled="isGroupApproval"></td>
+                    <td><input v-model.trim="member.contact" maxlength="100" :aria-label="`第 ${index + 1} 行联系方式`" :disabled="isGroupApproval"></td>
+                    <td><input v-model.trim="member.projectRole" maxlength="100" :aria-label="`第 ${index + 1} 行项目角色`" :disabled="isGroupApproval"></td>
+                    <td><input v-model.trim="member.taskAssignment" maxlength="1000" :aria-label="`第 ${index + 1} 行任务分工`" :disabled="isGroupApproval"></td>
                   </tr>
                 </tbody>
               </table>
@@ -490,6 +599,7 @@ function clearMembers() {
 .field input, .field select, .field textarea { border-color: #e5dfbd; border-radius: 6px; background: var(--field); }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: #7995ea; background: #fff; box-shadow: 0 0 0 3px rgba(49, 95, 216, .12); }
 .field input:disabled, .field select:disabled { color: #596276; background: #f1f2f5; border-color: #e0e3e8; }
+.readonly-chip { flex: 1; min-height: 42px; display: flex; align-items: center; padding: 0 12px; border: 1px solid #91b1ff; border-radius: 6px; color: #2362d2; background: #edf3ff; font-weight: 700; }
 .radio-box { border-color: #e5dfbd; border-radius: 6px; background: var(--field); }
 .radio-box input { accent-color: var(--primary); }
 .upload-area { border-color: #d6c878; border-radius: 6px; background: var(--field); }
@@ -504,6 +614,7 @@ function clearMembers() {
 .description-field > span { padding-top: 11px; color: #5b657a; text-align: right; }
 .description-field textarea { min-height: 86px; padding: 10px 12px; border: 1px solid #e5dfbd; border-radius: 6px; outline: 0; background: var(--field); resize: vertical; line-height: 1.65; }
 .description-field textarea:focus { border-color: #7995ea; background: #fff; box-shadow: 0 0 0 3px rgba(49, 95, 216, .12); }
+.description-field textarea:disabled { color: #596276; border-color: #e0e3e8; background: #f1f2f5; }
 
 .funding-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 .funding-field { min-width: 0; padding: 0 10px 12px; border-right: 1px solid var(--line); background: #fafbfe; }
@@ -511,6 +622,7 @@ function clearMembers() {
 .funding-field > span { min-height: 42px; display: flex; align-items: center; justify-content: center; color: #5b657a; text-align: center; }
 .funding-field input { width: 100%; height: 40px; padding: 0 42px 0 10px; border: 1px solid #e5dfbd; border-radius: 6px; outline: 0; background: var(--field); }
 .funding-field input:focus { border-color: #7995ea; background: #fff; box-shadow: 0 0 0 3px rgba(49, 95, 216, .12); }
+.funding-field input:disabled { color: #596276; border-color: #e0e3e8; background: #f1f2f5; }
 .funding-total { display: flex; align-items: center; justify-content: flex-end; gap: 16px; padding: 12px 4px 0; color: #5b657a; }
 .funding-total strong { color: var(--brand-navy); font-size: 18px; }
 
@@ -529,6 +641,9 @@ function clearMembers() {
 .member-table td:first-child { width: 62px; color: var(--muted); }
 .member-table input { width: 100%; height: 36px; padding: 0 9px; border: 1px solid #e5dfbd; border-radius: 5px; outline: 0; background: var(--field); }
 .member-table input:focus { border-color: #7995ea; background: #fff; box-shadow: 0 0 0 3px rgba(49, 95, 216, .1); }
+.member-table input:disabled { color: #596276; border-color: transparent; background: transparent; }
+
+.is-group-approval .project-application-title { background: radial-gradient(circle at 16% 120%, rgba(68, 115, 239, .68), transparent 260px), radial-gradient(circle at 82% -80%, rgba(38, 174, 171, .42), transparent 310px), linear-gradient(105deg, var(--brand-navy-deep), #253984 48%, #17316a); }
 
 .action-bar { height: 68px; border-top-color: #e0e3eb; box-shadow: 0 -8px 28px rgba(31, 39, 116, .08); backdrop-filter: blur(10px); }
 .action-bar button { border-color: #c8cdda; }

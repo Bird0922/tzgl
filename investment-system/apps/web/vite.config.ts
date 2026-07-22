@@ -8,7 +8,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
-        equityProjectApplication: fileURLToPath(new URL('./equity-project-application.html', import.meta.url))
+        equityProjectApplication: fileURLToPath(new URL('./equity-project-application.html', import.meta.url)),
+        equityGroupApproval: fileURLToPath(new URL('./equity-group-approval.html', import.meta.url))
       }
     }
   },
